@@ -1,6 +1,13 @@
 <template>
   <div class="default-layout">
     <h1>Default Layout</h1>
+    <div>
+      <!-- {{
+        localStorage.getItem(
+          "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/currentUser"
+        )
+      }} -->
+    </div>
     <!-- <div>Userdata:</div>
     {{ userdata }} -->
     <!-- <NuxtLink to="/auth">Auth</NuxtLink> -->
@@ -29,6 +36,7 @@ import { useRouter } from "vue-router";
 const sessionStore = useSessionStore();
 const { isValid } = sessionStore;
 const { valid } = storeToRefs(sessionStore);
+const { username } = storeToRefs(sessionStore);
 // const valid = sessionStore.valid;
 
 const { userf } = sessionStore;

@@ -17,7 +17,7 @@ const { isValid } = sessionStore;
 const { valid } = storeToRefs(sessionStore);
 // const valid = sessionStore.valid;
 
-const { userf } = sessionStore;
+// const { userf } = sessionStore;
 const { userdata } = storeToRefs(sessionStore);
 
 // onBeforeMount(userf);

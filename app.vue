@@ -8,7 +8,6 @@
       {{ valid }}
       <!-- {{ userdata }} -->
       <!-- {{ localStorageData }} -->
-      <v-btn type="submit" color="primary" text="+" @click="userf()"></v-btn>
       <exit-button></exit-button>
     </v-app>
   </div>
@@ -23,7 +22,7 @@ import { storeToRefs } from "pinia";
 
 const sessionStore = useSessionStore();
 const { isValid } = sessionStore;
-const { userf } = sessionStore;
+// const { userf } = sessionStore;
 const { userdata } = storeToRefs(sessionStore);
 const { valid } = storeToRefs(sessionStore);
 // const valid = sessionStore.valid;
