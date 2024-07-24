@@ -207,6 +207,7 @@ export default {
       user.set("username", this.registerForm.username);
       user.set("password", this.registerForm.password);
       user.set("email", this.registerForm.email);
+      user.set("avatar", "");
       console.log(user);
 
       user

@@ -1,14 +1,15 @@
 <template>
-  <div>
+  <div class="scroll">
     <v-app>
       <!-- <NuxtWelcome /> -->
       <NuxtPage :page-key="(route) => route.fullPath" />
       <!-- <auth-reg></auth-reg> -->
       <!-- <div>{{}}</div> -->
-      {{ valid }}
+      <!-- <header-menu></header-menu> -->
+      <!-- {{ valid }} -->
       <!-- {{ userdata }} -->
       <!-- {{ localStorageData }} -->
-      <exit-button></exit-button>
+      <!-- <exit-button></exit-button> -->
     </v-app>
   </div>
 </template>
@@ -18,9 +19,11 @@ import Parse from "parse";
 import { ref, onMounted, onBeforeMount } from "vue";
 
 import { useSessionStore } from "./store/session";
+import { useGameStore } from "./store/game";
 import { storeToRefs } from "pinia";
 
 const sessionStore = useSessionStore();
+const gameStore = useGameStore();
 const { isValid } = sessionStore;
 // const { userf } = sessionStore;
 const { userdata } = storeToRefs(sessionStore);
@@ -48,6 +51,11 @@ useHead({
     {
       rel: "stylesheet",
       href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap",
+      crossorigin: "",
+    },
+    {
+      rel: "stylesheet",
+      href: "https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css",
       crossorigin: "",
     },
   ],
