@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="position: fixed; width: 100%; z-index: 2">
     <!-- <h1>Default Layout</h1> -->
     <div class="d-flex pa-2 bg-deep-purple">
       Привет, {{ username }}!
@@ -135,8 +135,17 @@ const { username } = storeToRefs(sessionStore);
 const { userf } = sessionStore;
 const { userdata } = storeToRefs(sessionStore);
 
-// const router = useRouter();
+const changeOverflow = () => {
+  if (active) {
+    document.body.style.overflow = "hidden";
+    document.body.style.backgroundColor = "red";
+  } else {
+    document.body.style.overflow = "auto";
+  }
+  console.log("changeOverflow");
+};
 
+// const router = useRouter();
 // const checkValid = () => {
 //   // Удаляем определенные значения из localStorage
 //   isValid();

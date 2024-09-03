@@ -87,8 +87,12 @@ const getAllLocalStorageData = () => {
 //   isValid("100");
 // };
 
+// const changeOverflow = () => {
+//   document.body.style.overflow = "hidden";
+// };
+
 // Вызываем функцию при монтировании компонента
-// onMounted(isValid);
+// onMounted(changeOverflow);
 onBeforeMount(getAllLocalStorageData);
 // onBeforeMount(userf);
 // console.log(

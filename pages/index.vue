@@ -23,7 +23,8 @@
     <!-- <exit-button></exit-button> -->
     <!-- {{ gameTheme }} -->
     <!-- {{ clickItem }} -->
-    Start: {{ start }} Loading: {{ loading }}
+    Start: {{ start }} Loading: {{ loading }} Finish Game:
+    {{ finishMatchGameArray }}
   </div>
 </template>
 
@@ -57,7 +58,8 @@ const gameStore = useGameStore();
 const { isValid } = sessionStore;
 const { valid } = storeToRefs(sessionStore);
 const { username } = storeToRefs(sessionStore);
-const { clickItem, gameTheme, loading } = storeToRefs(gameStore);
+const { clickItem, gameTheme, loading, finishMatchGameArray } =
+  storeToRefs(gameStore);
 const { start } = storeToRefs(gameStore);
 const { setStartValue } = gameStore;
 // const valid = sessionStore.valid;

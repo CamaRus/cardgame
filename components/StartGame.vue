@@ -40,7 +40,11 @@
               label="Введите id игры"
             ></v-text-field>
             <template v-slot:actions>
-              <v-btn class="ms-auto" text="Ok" @click="dialog = false"></v-btn>
+              <v-btn
+                class="ms-auto"
+                text="Ok"
+                @click="(dialog = false), joinTheGame()"
+              ></v-btn>
             </template>
           </v-card>
         </v-dialog>
@@ -94,7 +98,7 @@ export default {
 
     dialog: false,
     clickedItem: null,
-    gameId: null,
+    gameId: "",
     theme: "",
     loading: false,
   }),
@@ -179,11 +183,42 @@ export default {
         this.setLoadingValue(false); // Скрываем загрузчик
       }
     },
+
+    async joinTheGame() {
+      const Game = Parse.Object.extend("Games");
+      const query1 = new Parse.Query(Game);
+      // Ищем объект по id
+      const gameObject = await query1.get(this.gameId);
+
+      const Enemy = Parse.Object.extend("EnemyData");
+      const query2 = new Parse.Query(Enemy);
+      const enemyObject = await query2.get("R6Hby7Qgmi");
+
+      if (gameObject) {
+        console.log("Game found: ", gameObject);
+        console.log("Enemy found: ", enemyObject);
+        const relation = gameObject.relation("EnemyData");
+        relation.add(enemyObject);
+        gameObject.save();
+
+        // Создаем новую колонку с типом массив и записываем туда данные
+        // gameObject.set("MatchValues", matchValues);
+
+        // Сохраняем изменения
+        // await gameObject.save();
+        // matchGame.value = false;
+        // dialog.value = true;
+
+        //   console.log("Game updated successfully with new array column.");
+        // console.log("Dialog: ", dialog);
+        // console.log("Match Game: ", matchGame);
+      }
+    },
   },
 };
 </script>
 <style scoped>
 .main {
-  margin-top: 20px;
+  margin-top: 100px;
 }
 </style>
