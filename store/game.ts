@@ -13,7 +13,9 @@ export const useGameStore = defineStore("gameStore", () => {
   const gameTheme = ref<string | null>(null);
   // const keyForRerender = ref(0);
 
-  const gamesData = ref<any[]>([]);
+  // const gamesData = ref<any[]>([]);
+  const gamesData = ref<Parse.Object[]>([]);
+  // const gamesData2 = ref<Parse.Object[]>([]);
 
   //////fetchGames
   const fetchGames = async () => {
@@ -125,6 +127,7 @@ export const useGameStore = defineStore("gameStore", () => {
 
   const selectedGame = ref<any>(null);
   const gameVisible = ref(false);
+  const confirmation = ref(false);
   const relatedEnemies = ref<any[]>([]);
   const enemiesData = ref<any[]>([]);
   const tooltipText = ref<string | null>("Нажмите, чтобы копировать ID игры");
@@ -138,6 +141,16 @@ export const useGameStore = defineStore("gameStore", () => {
       finishMatchGame.value = false;
     }
     console.log("Selected Game: ", selectedGame.value.objectId);
+  }
+
+  async function confirmationWindow(game: any) {
+    selectedGame.value = game;
+    confirmation.value = true;
+  }
+
+  async function confirmationWindowClose() {
+    // selectedGame.value = game;
+    confirmation.value = false;
   }
 
   async function copyGameId(game: any) {
@@ -305,6 +318,9 @@ export const useGameStore = defineStore("gameStore", () => {
     // return resultArray;
   }
 
+  // Инициализация подписки при монтировании компонента
+  // onMounted(setupLiveQuery);
+
   return {
     fetchGames,
     clickItem,
@@ -347,6 +363,9 @@ export const useGameStore = defineStore("gameStore", () => {
     setScore,
     tooltipText,
     copyGameId,
+    confirmation,
+    confirmationWindow,
+    confirmationWindowClose,
     // keyForRerender,
     // forceRerender,
   };

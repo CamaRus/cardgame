@@ -36,7 +36,8 @@
                     {
                       {
                         if (game.Opponent) {
-                          openGame(game);
+                          // openGame(game);
+                          confirmationWindow(game);
                         } else {
                           copyGameId(game);
                         }
@@ -57,15 +58,15 @@
                     }}</v-card-subtitle
                   > -->
                   <v-card-subtitle v-if="game.Opponent">
-                    Соперники найдены:
+                    Соперники найдены!
                   </v-card-subtitle>
-                  <v-chip-group
+                  <!-- <v-chip-group
                     style="display: ruby"
                     v-for="Enemy in game.EnemyData"
                     :key="Enemy.username"
                   >
                     <v-chip>{{ Enemy.Enemy.username }}</v-chip>
-                  </v-chip-group>
+                  </v-chip-group> -->
                   <!-- <div v-for="Enemy in game.EnemyData" :key="Enemy.username">
                     <p>{{ Enemy.Enemy.username }}</p>
                   </div> -->
@@ -142,12 +143,13 @@
       </v-row>
     </v-container>
     <MatchingGame></MatchingGame>
+    <GameConfirmation></GameConfirmation>
     <!-- <MismatchingGame v-if="finishMatchGame"></MismatchingGame> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import Parse from "parse";
 
 // Инициализация Parse SDK (добавьте ваши ключи и URL)
@@ -170,10 +172,11 @@ const {
   setGames,
   fetchGames,
   copyGameId,
+  confirmationWindow,
 } = gameStore;
 
 // Создание реактивного состояния для хранения данных
-const games = ref<any[]>([]);
+// const games = ref<any[]>([]);
 const finishGames = ref<any[]>([]);
 
 // Функция для получения данных игр текущего пользователя
@@ -248,87 +251,92 @@ const finishGames = ref<any[]>([]);
 //   }
 // };
 
-const getGames = async () => {
-  setLoadingValue(true);
-  const currentUser = Parse.User.current();
+// const getGames = async () => {
+//   setLoadingValue(true);
+//   const currentUser = Parse.User.current();
 
-  if (!currentUser) {
-    console.error("No user is currently logged in");
-    return;
-  }
+//   if (!currentUser) {
+//     console.error("No user is currently logged in");
+//     return;
+//   }
 
-  const Game = Parse.Object.extend("Games");
-  const query1 = new Parse.Query(Game);
-  // const query2 = new Parse.Query(Game);
+//   const Game = Parse.Object.extend("Games");
+//   const query1 = new Parse.Query(Game);
+//   // const query2 = new Parse.Query(Game);
 
-  // Добавляем условие, чтобы получать только игры текущего пользователя
-  query1.equalTo("GameCreator", currentUser);
-  // Добавляем условие, чтобы получать только завершенные игры
-  // query1.equalTo("Finish", false);
-  // query2.equalTo("GameCreator", currentUser);
-  // query2.equalTo("Finish", true);
+//   // Добавляем условие, чтобы получать только игры текущего пользователя
+//   query1.equalTo("GameCreator", currentUser);
+//   // Добавляем условие, чтобы получать только завершенные игры
+//   // query1.equalTo("Finish", false);
+//   // query2.equalTo("GameCreator", currentUser);
+//   // query2.equalTo("Finish", true);
 
-  try {
-    const results1 = await query1.find();
-    // const results2 = await query2.find();
+//   try {
+//     const results1 = await query1.find();
+//     // const results2 = await query2.find();
 
-    // Проходим по всем найденным и незавершённым играм
-    const gamesWithEnemyData = await Promise.all(
-      results1.map(async (game) => {
-        const gameJson = game.toJSON();
+//     // Проходим по всем найденным и незавершённым играм
+//     const gamesWithEnemyData = await Promise.all(
+//       results1.map(async (game) => {
+//         const gameJson = game.toJSON();
 
-        // Получаем данные из отношения EnemyData
-        const enemyDataRelation = game.relation("EnemyData");
-        const enemyDataQuery = enemyDataRelation.query();
+//         // Получаем данные из отношения EnemyData
+//         const enemyDataRelation = game.relation("EnemyData");
+//         const enemyDataQuery = enemyDataRelation.query();
 
-        try {
-          const enemyDataResults = await enemyDataQuery.find();
+//         try {
+//           const enemyDataResults = await enemyDataQuery.find();
 
-          // Проходим по всем найденным записям в EnemyData
-          const enemyDataJson = await Promise.all(
-            enemyDataResults.map(async (enemyData) => {
-              const enemyDataObj = enemyData.toJSON();
+//           // Проходим по всем найденным записям в EnemyData
+//           const enemyDataJson = await Promise.all(
+//             enemyDataResults.map(async (enemyData) => {
+//               const enemyDataObj = enemyData.toJSON();
 
-              // Получаем данные из указателя Enemy
-              const enemyPointer = enemyData.get("Enemy");
-              if (enemyPointer) {
-                const enemyQuery = new Parse.Query(Parse.User);
-                try {
-                  const enemy = await enemyQuery.get(enemyPointer.id);
-                  enemyDataObj.Enemy = enemy.toJSON();
-                } catch (error) {
-                  console.error("Error while fetching enemy data:", error);
-                }
-              }
+//               // Получаем данные из указателя Enemy
+//               const enemyPointer = enemyData.get("Enemy");
+//               if (enemyPointer) {
+//                 const enemyQuery = new Parse.Query(Parse.User);
+//                 try {
+//                   const enemy = await enemyQuery.get(enemyPointer.id);
+//                   enemyDataObj.Enemy = enemy.toJSON();
+//                 } catch (error) {
+//                   console.error("Error while fetching enemy data:", error);
+//                 }
+//               }
 
-              return enemyDataObj;
-            })
-          );
+//               return enemyDataObj;
+//             })
+//           );
 
-          gameJson.EnemyData = enemyDataJson;
-        } catch (error) {
-          console.error("Error while fetching enemy data relation:", error);
-        }
+//           gameJson.EnemyData = enemyDataJson;
+//         } catch (error) {
+//           console.error("Error while fetching enemy data relation:", error);
+//         }
 
-        return gameJson;
-      })
-    );
+//         return gameJson;
+//       })
+//     );
 
-    games.value = gamesWithEnemyData;
-    setGames(games.value);
-    console.log(games.value);
-    // console.log("Finish Games: ", results2);
-  } catch (error) {
-    console.error("Error while fetching games:", error);
-  } finally {
-    setLoadingValue(false);
-  }
-};
+//     games.value = gamesWithEnemyData;
+//     setGames(games.value);
+//     console.log(games.value);
+//     // console.log("Finish Games: ", results2);
+//   } catch (error) {
+//     console.error("Error while fetching games:", error);
+//   } finally {
+//     setLoadingValue(false);
+//   }
+// };
 
 // Используем onMounted для выполнения запроса при монтировании компонента
-onMounted(() => {
-  // getGames();
-  fetchGames();
+// onMounted(() => {
+//   // getGames();
+//   // fetchGames();
+//   await setupLiveQuery();
+// });
+
+onMounted(async () => {
+  await fetchGames();
 });
 </script>
 
