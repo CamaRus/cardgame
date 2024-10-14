@@ -27,10 +27,16 @@
           text="Начните игру 1 на 1 или дождитесь других соперников"
           type="info"
         ></v-alert>
-        <v-btn color="primary" v-if="selectedGame.EnemyData.length > 1"
+        <v-btn
+          color="primary"
+          v-if="selectedGame.EnemyData.length > 1"
+          @click="openGame(selectedGame)"
           >Начать игру</v-btn
         >
-        <v-btn color="primary" v-else>Начать игру 1 на 1</v-btn>
+        <v-btn color="primary" v-else @click="duelMenu(true)"
+          >Начать игру 1 на 1</v-btn
+        >
+        {{ duel }}
         <!-- </div> -->
       </div>
       <!-- </template> -->
@@ -53,8 +59,9 @@ import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
 
 const gameStore = useGameStore();
-const { confirmation, selectedGame } = storeToRefs(gameStore);
-const { confirmationWindow, confirmationWindowClose } = gameStore;
+const { confirmation, selectedGame, duel } = storeToRefs(gameStore);
+const { confirmationWindow, confirmationWindowClose, openGame, duelMenu } =
+  gameStore;
 </script>
 
 <style scoped></style>

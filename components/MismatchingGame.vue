@@ -14,6 +14,7 @@
       <!-- {{ relatedEnemies[0].Enemy }} -->
       <!-- </div> -->
     </v-card-text>
+    <div>MismatchRate: {{ selectedGame?.MismatchRate }}</div>
     <v-row no-gutters>
       <v-col>
         <v-sheet class="pa-2 ma-2">
@@ -179,6 +180,7 @@ const {
   setMismatchScore,
   scoring,
   setScore,
+  fetchGames,
 } = gameStore;
 
 const handleChange = (value) => {
@@ -197,15 +199,18 @@ const fixMismatch = () => {
 
   // Добавляем собственное значение
   if (selectedGame.value.MissmatchValue !== null) {
-    matchObject[selectedGame.value.GameCreator.username] =
+    // matchObject[selectedGame.value.GameCreator.username] =
+    matchObject[selectedGame.value.GameCreator.objectId] =
       selectedGame.value.MissmatchValue;
   } else {
-    matchObject[selectedGame.value.GameCreator.username] = null;
+    // matchObject[selectedGame.value.GameCreator.username] = null;
+    matchObject[selectedGame.value.GameCreator.objectId] = null;
   }
 
   // Добавляем значения соперников
   selectedGame.value.EnemyData.forEach((enemy) => {
-    matchObject[enemy.Enemy.username] = enemy.MissmatchValue;
+    // matchObject[enemy.Enemy.username] = enemy.MissmatchValue;
+    matchObject[enemy.Enemy.objectId] = enemy.MissmatchValue;
   });
 
   addMismatch(matchObject);
@@ -223,19 +228,39 @@ const toggleSelectMatch = (index) => {
 };
 
 // Функция для подсчета непустых значений
-function countEmptyValues(mismatches) {
+async function countEmptyValues(mismatches) {
   const counts = {};
+
+  // Проход по каждому объекту в массиве совпадений
+  // mismatches.forEach((mismatch) => {
+  //   for (const user in mismatch) {
+  //     if (mismatch.hasOwnProperty(user)) {
+  //       // Увеличиваем счетчик, если значение не пустое
+  //       if (mismatch[user] === null) {
+  //         if (!counts[user]) {
+  //           counts[user] = 0;
+  //         }
+  //         counts[user]++;
+  //       }
+  //     }
+  //   }
+  // });
 
   // Проход по каждому объекту в массиве совпадений
   mismatches.forEach((mismatch) => {
     for (const user in mismatch) {
       if (mismatch.hasOwnProperty(user)) {
-        // Увеличиваем счетчик, если значение не пустое
-        if (mismatch[user] === null) {
+        // Если значение не пустое (не null и не undefined), увеличиваем счетчик
+        if (mismatch[user] !== null && mismatch[user] !== undefined) {
           if (!counts[user]) {
             counts[user] = 0;
           }
           counts[user]++;
+        } else {
+          // Если значение null или undefined, создаем ключ с нулевым значением, если его еще нет
+          if (!counts[user]) {
+            counts[user] = 0;
+          }
         }
       }
     }
@@ -249,6 +274,29 @@ function countEmptyValues(mismatches) {
   setMismatchScore(result);
   // Считаем общее количество очков
   scoring(matchScore.value, mismatchScore.value);
+
+  const transformedArray = result.map((item) => {
+    const key = Object.keys(item)[0];
+    return [key, item[key]];
+  });
+
+  const Game = Parse.Object.extend("Games");
+  const query = new Parse.Query(Game);
+
+  //   Ищем объект по id
+  // const gameObject = await query.get(selectedGame.value.objectId);
+
+  try {
+    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
+    const gameObject = await query.get(selectedGame.value.objectId);
+
+    // Устанавливаем значение столбца Score
+    gameObject.set("MismatchScore", transformedArray);
+    // Сохраняем изменения
+    await gameObject.save();
+  } catch (error) {
+    console.error("Error while saving Score:", error);
+  }
   // return result;
 }
 
@@ -266,21 +314,32 @@ async function saveScore() {
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
   console.log("Object Id: ", selectedGame.value.objectId);
+
+  const queryUsers = new Parse.Query(Parse.User);
+
+  // Добавляем условие, чтобы получить пользователей, чьи objectId находятся в массиве
+  queryUsers.containedIn("objectId", topScorers);
+
   // Ищем объект по id
   // const gameObject = await query.get(selectedGame.value.objectId);
 
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
     const gameObject = await query.get(selectedGame.value.objectId); // замените OBJECT_ID на ID нужного объекта
+    const users = await queryUsers.find();
 
     // Устанавливаем значение столбца Score
     gameObject.set("Score", score.value);
     gameObject.set("Finish", true);
+    // gameObject.set("Winners", topScorers);
+    const relation = gameObject.relation("Winners");
+    relation.add(users);
 
+    closeGame();
     // Сохраняем изменения
     await gameObject.save();
+    await fetchGames();
     console.log("Score successfully saved!");
-    closeGame();
   } catch (error) {
     console.error("Error while saving Score:", error);
   }

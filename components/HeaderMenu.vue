@@ -1,5 +1,6 @@
 <template>
-  <div style="position: fixed; width: 100%; z-index: 2">
+  <!-- <div style="position: fixed; width: 100%; z-index: 2"> -->
+  <div>
     <!-- <h1>Default Layout</h1> -->
     <div class="d-flex pa-2 bg-deep-purple">
       Привет, {{ username }}!
@@ -127,7 +128,7 @@ import { storeToRefs } from "pinia";
 // import { useRouter } from "vue-router";
 
 const sessionStore = useSessionStore();
-const { isValid } = sessionStore;
+const { isValid, fetchUsername } = sessionStore;
 const { valid } = storeToRefs(sessionStore);
 const { username } = storeToRefs(sessionStore);
 // const valid = sessionStore.valid;
@@ -157,6 +158,10 @@ const changeOverflow = () => {
 // onBeforeMount(userf);
 // onBeforeMount(isValid);
 // Created(checkValid);
+
+// onMounted(() => {
+//   fetchUsername();
+// });
 
 // definePageMeta({
 //   key: (route) => route.fullPath,

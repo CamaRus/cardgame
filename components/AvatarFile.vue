@@ -23,7 +23,7 @@
       </svg> -->
 
       <svg
-        v-if="(!avatar.url && !previewUrl) || !file"
+        v-if="!avatar?.url && !previewUrl && !file"
         :width="iconSize"
         :height="iconSize"
         xmlns="http://www.w3.org/2000/svg"
@@ -48,13 +48,15 @@
       />
       <img
         v-else
-        :src="avatar.url"
+        :src="avatar?.url"
         alt="Avatar Preview"
         class="avatar-preview"
       />
     </div>
     <!-- Кнопка для удаления изображения -->
-    <button @click="removeImage" v-if="previewUrl || avatar.url">Remove</button>
+    <button @click="removeImage" v-if="previewUrl || avatar?.url">
+      Remove
+    </button>
     <!-- <img :src="avatar.url" alt="Avatar Preview" class="avatar-preview" /> -->
     <!-- {{ avatarProfile.name }} -->
   </div>

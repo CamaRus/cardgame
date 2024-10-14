@@ -10,16 +10,22 @@
         <h2 class="animation" style="text-align: center">Игра на совпадение</h2>
         <h3 style="text-align: center">{{ selectedGame?.CoincidenceTheme }}</h3>
         <!-- <h3>Игрок: {{ selectedGame?.GameCreator }}</h3> -->
-        Scores:
+        <div>MatchRate: {{ selectedGame?.MatchRate }}</div>
+
+        <!-- Scores:
         <ul>
           <li v-for="(item, index) in selectedGame?.Score" :key="index">
             {{ Object.keys(item)[0] }}: {{ Object.values(item)[0] }}
           </li>
         </ul>
-        {{ selectedGame?.Score }}
+        {{ selectedGame?.Score }} -->
         <div>
           <!-- {{ relatedEnemies[0].Enemy }} -->
-          {{ selectedGame.EnemyData.length }}
+          <!-- {{ selectedGame.EnemyData.length }} -->
+        </div>
+        <div>
+          <!-- {{ relatedEnemies[0].Enemy }} -->
+          <!-- {{ selectedGame.Finish }} -->
         </div>
       </v-card-text>
       <v-row no-gutters>
@@ -203,15 +209,18 @@ const fixMatch = () => {
 
   // Добавляем собственное значение
   if (selectedGame.value.MatchValue !== null) {
-    matchObject[selectedGame.value.GameCreator.username] =
+    // matchObject[selectedGame.value.GameCreator.username] =
+    matchObject[selectedGame.value.GameCreator.objectId] =
       selectedGame.value.MatchValue;
   } else {
-    matchObject[selectedGame.value.GameCreator.username] = null;
+    // matchObject[selectedGame.value.GameCreator.username] = null;
+    matchObject[selectedGame.value.GameCreator.objectId] = null;
   }
 
   // Добавляем значения соперников
   selectedGame.value.EnemyData.forEach((enemy) => {
-    matchObject[enemy.Enemy.username] = enemy.MatchValue;
+    // matchObject[enemy.Enemy.username] = enemy.MatchValue;
+    matchObject[enemy.Enemy.objectId] = enemy.MatchValue;
   });
 
   addMatch(matchObject);
@@ -229,19 +238,39 @@ const toggleSelectMatch = (index) => {
 };
 
 // Функция для подсчета непустых значений
-function countNonEmptyValues(matches) {
+async function countNonEmptyValues(matches) {
   const counts = {};
+
+  // Проход по каждому объекту в массиве совпадений
+  // matches.forEach((match) => {
+  //   for (const user in match) {
+  //     if (match.hasOwnProperty(user)) {
+  //       // Увеличиваем счетчик, если значение не пустое
+  //       if (match[user] !== null) {
+  //         if (!counts[user]) {
+  //           counts[user] = 0;
+  //         }
+  //         counts[user]++;
+  //       }
+  //     }
+  //   }
+  // });
 
   // Проход по каждому объекту в массиве совпадений
   matches.forEach((match) => {
     for (const user in match) {
       if (match.hasOwnProperty(user)) {
-        // Увеличиваем счетчик, если значение не пустое
-        if (match[user] !== null) {
+        // Если значение не пустое (не null и не undefined), увеличиваем счетчик
+        if (match[user] !== null && match[user] !== undefined) {
           if (!counts[user]) {
             counts[user] = 0;
           }
           counts[user]++;
+        } else {
+          // Если значение null или undefined, создаем ключ с нулевым значением, если его еще нет
+          if (!counts[user]) {
+            counts[user] = 0;
+          }
         }
       }
     }
@@ -257,6 +286,29 @@ function countNonEmptyValues(matches) {
   // finishMatchGame.value = true;
   setFinishMatchGame(true);
   addFinishMatchGame(selectedGame.value.objectId);
+
+  const transformedArray = result.map((item) => {
+    const key = Object.keys(item)[0];
+    return [key, item[key]];
+  });
+
+  const Game = Parse.Object.extend("Games");
+  const query = new Parse.Query(Game);
+
+  //   Ищем объект по id
+  // const gameObject = await query.get(selectedGame.value.objectId);
+
+  try {
+    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
+    const gameObject = await query.get(selectedGame.value.objectId);
+
+    // Устанавливаем значение столбца Score
+    gameObject.set("MatchScore", transformedArray);
+    // Сохраняем изменения
+    await gameObject.save();
+  } catch (error) {
+    console.error("Error while saving Score:", error);
+  }
   // return result;
 }
 

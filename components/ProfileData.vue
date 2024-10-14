@@ -7,6 +7,7 @@
         <v-toolbar-title class="font-weight-light">
           <!-- {{ fetchUsername }} -->
           {{ username }}
+          <!-- {{ userId }} -->
           <!-- {{ email }} -->
           <!-- {{ avatarProfile }} -->
           <!-- {{ avatar.name }} -->

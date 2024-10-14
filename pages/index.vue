@@ -55,7 +55,7 @@ import { useRouter } from "vue-router";
 
 const sessionStore = useSessionStore();
 const gameStore = useGameStore();
-const { isValid } = sessionStore;
+const { isValid, fetchUsername } = sessionStore;
 const { valid } = storeToRefs(sessionStore);
 const { username } = storeToRefs(sessionStore);
 const { clickItem, gameTheme, loading, finishMatchGameArray } =
@@ -94,7 +94,7 @@ const router = useRouter();
 // onBeforeMount(isValid);
 // Created(checkValid);
 
-// onMounted(fetchData);
+onMounted(fetchUsername);
 
 definePageMeta({
   key: (route) => route.fullPath,
