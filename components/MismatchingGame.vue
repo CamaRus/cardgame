@@ -118,8 +118,17 @@
       Зафиксировать совпадение
     </v-btn>
     <v-card-actions>
-      <v-btn color="primary" @click="countEmptyValues(mismatches), saveScore()"
+      <v-btn
+        v-if="!selectedGame.Duel"
+        color="primary"
+        @click="countEmptyValues(mismatches), saveScore()"
         >Закончить</v-btn
+      >
+      <v-btn
+        v-else
+        color="primary"
+        @click="mismatchScoreDuel(mismatches), enemyMove()"
+        >Закончить дуэль!</v-btn
       >
     </v-card-actions>
     <!-- {{ selectedGame?.GameCreator.username }} -->
@@ -140,12 +149,12 @@ Parse.initialize(
 Parse.serverURL = "https://parseapi.back4app.com/";
 import { ref } from "vue";
 
-// import { useSessionStore } from "../store/session";
+import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
 
-// const sessionStore = useSessionStore();
-// const { avatarProfile } = storeToRefs(sessionStore);
+const sessionStore = useSessionStore();
+const { userId } = storeToRefs(sessionStore);
 // const { avatar } = storeToRefs(sessionStore);
 // const { setAvatar } = sessionStore;
 
@@ -164,6 +173,8 @@ const {
   matchScore,
   mismatchScore,
   score,
+  strangersData,
+  duel,
 } = storeToRefs(gameStore);
 const {
   setLoadingValue,
@@ -181,6 +192,8 @@ const {
   scoring,
   setScore,
   fetchGames,
+  getGamesByEnemy,
+  mergeGameData,
 } = gameStore;
 
 const handleChange = (value) => {
@@ -300,6 +313,23 @@ async function countEmptyValues(mismatches) {
   // return result;
 }
 
+async function mismatchScoreDuel(mismatches) {
+  const Game = Parse.Object.extend("Games");
+  const query = new Parse.Query(Game);
+
+  try {
+    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
+    const gameObject = await query.get(selectedGame.value.objectId);
+
+    // Устанавливаем значение столбца Score
+    gameObject.set("MismatchScoreDuel", 6 - mismatches.length);
+    // Сохраняем изменения
+    await gameObject.save();
+  } catch (error) {
+    console.error("Error while saving Score:", error);
+  }
+}
+
 async function saveScore() {
   // Находим максимальное количество очков
   const maxScore = Math.max(...score.value.map((item) => item[1]));
@@ -339,6 +369,30 @@ async function saveScore() {
     // Сохраняем изменения
     await gameObject.save();
     await fetchGames();
+    await getGamesByEnemy(userId.value);
+    await mergeGameData(gamesData.value, strangersData.value);
+    console.log("Score successfully saved!");
+  } catch (error) {
+    console.error("Error while saving Score:", error);
+  }
+}
+
+async function enemyMove() {
+  const Game = Parse.Object.extend("Games");
+  const query = new Parse.Query(Game);
+  try {
+    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
+    const gameObject = await query.get(selectedGame.value.objectId); // замените OBJECT_ID на ID нужного объекта
+
+    // Устанавливаем значение столбца Score
+    gameObject.set("WaitEnemy", true);
+
+    closeGame();
+    // Сохраняем изменения
+    await gameObject.save();
+    await fetchGames();
+    await getGamesByEnemy(userId.value);
+    await mergeGameData(gamesData.value, strangersData.value);
     console.log("Score successfully saved!");
   } catch (error) {
     console.error("Error while saving Score:", error);

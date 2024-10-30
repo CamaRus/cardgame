@@ -65,7 +65,10 @@
                 <!-- <p>{{ game.objectId }}</p> -->
                 <!-- </div> -->
                 <v-card
-                  :disabled="game.GameCreator.objectId !== userId"
+                  :disabled="
+                    (game.GameCreator.objectId !== userId && !game.WaitEnemy) ||
+                    (game.GameCreator.objectId === userId && game.WaitEnemy)
+                  "
                   class="text-center"
                   max-width="400"
                   hover
@@ -82,6 +85,11 @@
                           confirmationWindow(game);
                         } else if (!game.Opponent) {
                           copyGameId(game);
+                        } else if (
+                          game.GameCreator.objectId !== userId &&
+                          game.WaitEnemy
+                        ) {
+                          duelMenu(true, game);
                         } else {
                           openGame(game);
                         }
@@ -114,7 +122,11 @@
                   >
                     Соперники найдены!
                   </v-card-subtitle>
-                  <v-card-subtitle v-if="game.GameCreator.objectId !== userId">
+                  <v-card-subtitle
+                    v-if="
+                      game.GameCreator.objectId !== userId && !game.WaitEnemy
+                    "
+                  >
                     Ожидание ведущего!
                     <div>
                       <v-progress-circular
@@ -139,7 +151,12 @@
                     v-if="!game.Opponent"
                     >{{ tooltipText }}</v-tooltip
                   >
-                  <v-card-subtitle v-if="!game.Opponent"
+                  <v-card-subtitle
+                    v-if="
+                      (!game.Opponent &&
+                        game.GameCreator.objectId === userId) ||
+                      (game.GameCreator.objectId === userId && game.WaitEnemy)
+                    "
                     >Ожидание соперника...
                     <div>
                       <v-progress-circular
@@ -147,6 +164,13 @@
                         indeterminate
                       ></v-progress-circular>
                     </div>
+                  </v-card-subtitle>
+                  <v-card-subtitle
+                    v-if="
+                      game.GameCreator.objectId !== userId && game.WaitEnemy
+                    "
+                  >
+                    Сделайте ставку!
                   </v-card-subtitle>
                 </v-card>
               </v-col>
@@ -310,19 +334,24 @@
                       <strong>{{ formatDate(game.createdAt) }}</strong>
                     </p>
                   </v-card>
-                  <v-card-subtitle v-if="game.Opponent">
-                    <h3>Победители:</h3>
-                  </v-card-subtitle>
-                  <div style="display: flex; justify-content: center">
-                    <v-chip-group
-                      v-for="Winner in game.WinnerData"
-                      :key="Winner.objectId"
-                      style="display: block"
-                    >
-                      <v-chip color="green" variant="flat">
-                        {{ Winner.username }}
-                      </v-chip>
-                    </v-chip-group>
+                  <div v-if="game.WinnerData.length > 0">
+                    <v-card-subtitle v-if="game.Opponent">
+                      <h3>Победители:</h3>
+                    </v-card-subtitle>
+                    <div style="display: flex; justify-content: center">
+                      <v-chip-group
+                        v-for="Winner in game.WinnerData"
+                        :key="Winner.objectId"
+                        style="display: block"
+                      >
+                        <v-chip color="green" variant="flat">
+                          {{ Winner.username }}
+                        </v-chip>
+                      </v-chip-group>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <v-card-subtitle><h3>Ничья!</h3></v-card-subtitle>
                   </div>
                 </v-card>
               </v-col>
@@ -433,6 +462,7 @@ const {
   getAllGames,
   getGamesByEnemy,
   mergeGameData,
+  duelMenu,
 } = gameStore;
 
 // Создание реактивного состояния для хранения данных
@@ -514,17 +544,26 @@ const getChipStyle = (game) => {
   // if (game) {
   //   console.log("getChipStyle: ", game);
   // }
+  console.log("Winners: ", game);
 
-  if (game) {
+  if (game.length > 0 && game.length < 4) {
     game.forEach((element) => {
-      console.log(element.objectId);
+      // console.log(element.objectId);
       if (element.objectId.includes(userId.value)) {
-        console.log("Include!");
+        console.log("Include!", element.objectId);
+        console.log("Duel: ", game.Duel);
         className = "winner";
-      } else {
+      } else if (!element.objectId.includes(userId.value)) {
         className = "loser";
+        console.log("Loser!", element.objectId);
       }
+      // else if (element.objectId.includes(userId.value) && game.Duel == true) {
+      //   className = "draw";
+      //   console.log("Draw!");
+      // }
     });
+  } else {
+    className = "draw";
   }
   return className;
   // Проверим, является ли объект прокси и попробуем извлечь данные
@@ -786,6 +825,10 @@ onUnmounted(() => {
 
 .winner {
   background: lavender;
+}
+
+.draw {
+  background: greenyellow;
 }
 .games-list {
   margin-top: 20px;

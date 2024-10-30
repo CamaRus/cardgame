@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="confirmation" width="auto">
+  <v-dialog v-model="confirmation" :width="mobile ? '100%' : 'auto'">
     <v-card style="text-align: center; padding: 15px">
       <v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title>
       <v-card-subtitle>Ваши соперники:</v-card-subtitle>
@@ -33,7 +33,7 @@
           @click="openGame(selectedGame)"
           >Начать игру</v-btn
         >
-        <v-btn color="primary" v-else @click="duelMenu(true)"
+        <v-btn color="primary" v-else @click="duelMenu(true, selectedGame)"
           >Начать игру 1 на 1</v-btn
         >
         {{ duel }}
@@ -57,6 +57,9 @@ Parse.serverURL = "https://parseapi.back4app.com/";
 
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
+import { useDisplay } from "vuetify";
+
+const { mobile } = useDisplay();
 
 const gameStore = useGameStore();
 const { confirmation, selectedGame, duel } = storeToRefs(gameStore);

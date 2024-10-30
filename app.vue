@@ -113,6 +113,10 @@ const valid = storeToRefs(sessionStore);
 </script> -->
 
 <style>
+/* html,
+body {
+  overflow: hidden;
+} */
 .page-enter-active,
 .page-leave-active {
   transition: all 0.4s;

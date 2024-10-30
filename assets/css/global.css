@@ -1,0 +1,13 @@
+.no-scroll {
+  /* overflow: hidden; */
+  overflow-y: hidden !important;
+  /* touch-action: none; */
+  /* overscroll-behavior: none; */
+}
+
+/* html.no-scroll,
+body.no-scroll {
+  overflow-y: hidden !important;
+  touch-action: none;
+  overscroll-behavior: none;
+} */

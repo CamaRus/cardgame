@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="gameVisible" max-width="800" persistent>
+  <v-dialog
+    v-model="gameVisible"
+    max-width="800"
+    persistent
+    :fullscreen="mobile"
+  >
     <v-card v-if="!finishMatchGame">
       <v-toolbar
         ><v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title>
@@ -10,6 +15,7 @@
         <h2 class="animation" style="text-align: center">Игра на совпадение</h2>
         <h3 style="text-align: center">{{ selectedGame?.CoincidenceTheme }}</h3>
         <!-- <h3>Игрок: {{ selectedGame?.GameCreator }}</h3> -->
+        <!-- Д{{ selectedGame.Duel }} -->
         <div>MatchRate: {{ selectedGame?.MatchRate }}</div>
 
         <!-- Scores:
@@ -131,8 +137,14 @@
         Зафиксировать совпадение
       </v-btn>
       <v-card-actions>
-        <v-btn color="primary" @click="countNonEmptyValues(matches)"
+        <v-btn
+          v-if="!selectedGame.Duel"
+          color="primary"
+          @click="countNonEmptyValues(matches)"
           >Дальше</v-btn
+        >
+        <v-btn v-else color="primary" @click="matchScoreDuel(matches)"
+          >Дальше (дуэль)</v-btn
         >
       </v-card-actions>
       <!-- {{ selectedGame?.GameCreator.username }} -->
@@ -158,6 +170,9 @@ import { ref } from "vue";
 // import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
+import { useDisplay } from "vuetify";
+
+const { mobile } = useDisplay();
 
 // const sessionStore = useSessionStore();
 // const { avatarProfile } = storeToRefs(sessionStore);
@@ -177,6 +192,7 @@ const {
   matchScore,
   finishMatchGame,
   finishMatchGameArray,
+  duel,
 } = storeToRefs(gameStore);
 const {
   setLoadingValue,
@@ -310,6 +326,25 @@ async function countNonEmptyValues(matches) {
     console.error("Error while saving Score:", error);
   }
   // return result;
+}
+
+async function matchScoreDuel(matches) {
+  const Game = Parse.Object.extend("Games");
+  const query = new Parse.Query(Game);
+
+  try {
+    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
+    const gameObject = await query.get(selectedGame.value.objectId);
+
+    // Устанавливаем значение столбца Score
+    gameObject.set("MatchScoreDuel", matches.length);
+    // Сохраняем изменения
+    await gameObject.save();
+    setFinishMatchGame(true);
+    addFinishMatchGame(selectedGame.value.objectId);
+  } catch (error) {
+    console.error("Error while saving Score:", error);
+  }
 }
 
 // Вызов функции и получение результата

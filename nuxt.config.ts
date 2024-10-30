@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   hooks: {},
   ssr: false,
+  css: ["@/assets/css/global.css"],
   build: {
     transpile: ["vuetify"],
   },

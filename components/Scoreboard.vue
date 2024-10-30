@@ -1,10 +1,24 @@
 <template>
-  <v-dialog v-model="scoreboardWindow" width="50%">
+  <v-dialog
+    v-model="scoreboardWindow"
+    :width="mobile ? '100%' : '50%'"
+    :fullscreen="mobile"
+  >
     <v-card style="text-align: center; padding: 15px">
-      <h1 class="animation" style="text-align: center" v-if="winner">
+      <h1 class="animation" style="text-align: center" v-if="winner == 1">
         Вы выиграли!
+        <!-- {{ mobile }} -->
       </h1>
-      <h1 class="animation" style="text-align: center" v-else>Вы проиграли!</h1>
+      <h1 class="animation" style="text-align: center" v-else-if="winner == 2">
+        Вы проиграли!
+      </h1>
+      <h1
+        class="animation"
+        style="text-align: center"
+        v-else-if="winner == null"
+      >
+        Ничья!
+      </h1>
       <h2 class="animation" style="text-align: center">Результаты игры</h2>
       <h3 style="text-align: center">Игра на совпадение</h3>
       <div v-if="enemyGame">Enemy Game!</div>
@@ -105,7 +119,12 @@
         </v-col>
       </v-row>
       <hr />
-      <v-row no-gutters v-if="!enemyGame">
+      <v-row v-if="selectedGame.Duel">
+        <v-col>Ставка: {{ selectedGame.MatchRate }}</v-col>
+        <v-col>Ставка: {{ selectedGame.MatchRateEnemy }}</v-col>
+      </v-row>
+      <hr />
+      <v-row no-gutters v-if="!enemyGame && !selectedGame.Duel">
         <v-col v-for="MatchScore in selectedGame.MatchScore" :key="MatchScore">
           <v-sheet>
             Совпадений:
@@ -113,7 +132,13 @@
           </v-sheet>
         </v-col>
       </v-row>
-      <v-row no-gutters v-else>
+      <v-row no-gutters v-else-if="selectedGame.Duel" style="display: grid">
+        <v-sheet>
+          Совпадений:
+          {{ selectedGame.MatchScoreDuel }}
+        </v-sheet>
+      </v-row>
+      <v-row no-gutters v-else-if="enemyGame && !selectedGame.Duel">
         <v-col
           v-for="MatchScore in selectedGame.MatchScore"
           :key="MatchScore[0]"
@@ -260,7 +285,16 @@
       </v-row>
       <!-- /////////////////////////////////////////////////////////////////////////// -->
       <hr />
-      <v-row no-gutters v-if="!enemyGame">
+      <v-row v-if="selectedGame.Duel && !enemyGame">
+        <v-col>Ставка: {{ selectedGame.MismatchRate }}</v-col>
+        <v-col>Ставка: {{ selectedGame.MismatchRateEnemy }}</v-col>
+      </v-row>
+      <v-row v-else-if="selectedGame.Duel && enemyGame">
+        <v-col>Ставка: {{ selectedGame.MismatchRateEnemy }}</v-col>
+        <v-col>Ставка: {{ selectedGame.MismatchRate }}</v-col>
+      </v-row>
+      <hr />
+      <v-row no-gutters v-if="!enemyGame && !selectedGame.Duel">
         <v-col
           v-for="MismatchScore in selectedGame.MismatchScore"
           :key="MismatchScore"
@@ -271,7 +305,13 @@
           </v-sheet>
         </v-col>
       </v-row>
-      <v-row no-gutters v-else>
+      <v-row no-gutters v-else-if="selectedGame.Duel" style="display: grid">
+        <v-sheet>
+          Несовпадений:
+          {{ selectedGame.MismatchScoreDuel }}
+        </v-sheet>
+      </v-row>
+      <v-row no-gutters v-else-if="enemyGame && !selectedGame.Duel">
         <v-col
           v-for="MismatchScore in selectedGame.MismatchScore"
           :key="MismatchScore[0]"
@@ -343,6 +383,9 @@ Parse.serverURL = "https://parseapi.back4app.com/";
 import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
+import { useDisplay } from "vuetify";
+
+const { mobile } = useDisplay();
 
 const sessionStore = useSessionStore();
 const gameStore = useGameStore();

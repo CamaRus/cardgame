@@ -437,7 +437,8 @@ export const useGameStore = defineStore("gameStore", () => {
   const enemiesData = ref<any[]>([]);
   const tooltipText = ref<string | null>("Нажмите, чтобы копировать ID игры");
   const duel = ref(false);
-  const winner = ref(false);
+  // const winner = ref(false);
+  const winner = ref<number | null>(null);
   const randomTopicMatch = ref<string | null>(null);
   const randomTopicMismatch = ref<string | null>(null);
 
@@ -452,7 +453,8 @@ export const useGameStore = defineStore("gameStore", () => {
   }
 
   //Функция режима дуэли
-  function duelMenu(duelValue) {
+  function duelMenu(duelValue, game: any) {
+    selectedGame.value = game;
     confirmation.value = false;
     duel.value = duelValue;
   }
@@ -477,15 +479,33 @@ export const useGameStore = defineStore("gameStore", () => {
     const enemyDataGame = ref<any[]>([]);
     const remainingData = ref<any[]>([]);
     selectedGame.value = game;
-    if (selectedGame.value.WinnerData.includes(userId.value)) {
-      winner.value = true;
+    console.log(
+      "selectedGame.value.WinnerData.length: ",
+      selectedGame.value.WinnerData.length
+    );
+    if (selectedGame.value.WinnerData.length > 0) {
+      selectedGame.value.WinnerData.forEach((element) => {
+        if (element.objectId.includes(userId.value)) {
+          winner.value = 1;
+        } else {
+          winner.value = 2;
+        }
+        // console.log("Winner:", element.objectId);
+      });
     } else {
-      winner.value = false;
+      winner.value = null;
     }
+
+    // Проверяем, существует ли элемент с классом "target-class" в DOM
+    // if (selectedGame.value.WinnerData.includes(userId.value)) {
+    //   winner.value = true;
+    // } else {
+    //   winner.value = false;
+    // }
     scoreboardWindow.value = true;
     // console.log("Selected Game: ", selectedGame.value.objectId);
     // console.log("Username: ", username.value);
-    // console.log("Winners: ", selectedGame.value.WinnerData);
+    console.log("Winners: ", selectedGame.value.WinnerData);
     console.log("winner: ", winner.value);
     console.log("Game Creator: ", selectedGame.value.GameCreator);
     console.log("User ID: ", userId.value);
