@@ -1,25 +1,31 @@
 <template>
-  <!-- <v-dialog v-model="gameVisible" max-width="800" persistent> -->
   <v-card>
-    <v-toolbar
-      ><v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title>
+    <v-toolbar>
+      <!-- <v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title> -->
       <v-spacer></v-spacer>
       <v-btn icon="mdi-close" @click="closeGame"></v-btn>
     </v-toolbar>
     <v-card-text>
       <h2 class="animation" style="text-align: center">Игра на несовпадение</h2>
       <h3 style="text-align: center">{{ selectedGame?.MismatchTheme }}</h3>
-      <!-- <h3>Игрок: {{ selectedGame?.GameCreator }}</h3> -->
-      <!-- <div> -->
-      <!-- {{ relatedEnemies[0].Enemy }} -->
-      <!-- </div> -->
     </v-card-text>
-    <div>MismatchRate: {{ selectedGame?.MismatchRate }}</div>
-    <v-row no-gutters>
+    <!-- <div>MismatchRate: {{ selectedGame?.MismatchRate }}</div> -->
+    <v-row no-gutters :style="{ display: xs ? 'contents' : 'flex' }">
       <v-col>
         <v-sheet class="pa-2 ma-2">
-          <v-card color="indigo" style="text-align: center"
-            ><p><strong>Мои значения</strong></p></v-card
+          <v-card color="indigo" style="text-align: center">
+            <v-avatar
+              v-if="!avatar?.url"
+              color="info"
+              size="50"
+              style="margin-top: 5px"
+            >
+              <v-icon icon="mdi-account-circle" style="scale: 4"></v-icon>
+            </v-avatar>
+            <v-avatar v-else size="50" style="margin-top: 5px">
+              <v-img alt="Avatar" :src="avatar?.url"></v-img>
+            </v-avatar>
+            <p><strong>Мои значения</strong></p></v-card
           >
           <v-radio-group
             v-model="selectedGame.MissmatchValue"
@@ -33,31 +39,31 @@
             ></v-radio>
             <hr />
             <!-- Добавляем опцию для снятия выбора -->
-            <v-radio :label="'Нет совпадений'" :value="null"></v-radio>
+            <!-- <v-radio :label="'Нет совпадений'" :value="null"></v-radio> -->
           </v-radio-group>
-          <!-- <p>Selected Button: {{ selectedGame.MatchValue }}</p> -->
-
-          <!-- <v-checkbox
-                v-for="(MatchValue, index) in selectedGame.MatchValues"
-                v-model="selectedGame.MatchValue"
-                :label="MatchValue"
-                :value="MatchValue"
-                :key="index + MatchValue"
-              ></v-checkbox>
-              <p>Selected Button: {{ selectedGame.MatchValue }}</p> -->
         </v-sheet>
       </v-col>
       <v-col
         v-for="Enemy in selectedGame.EnemyData"
         :key="Enemy.Enemy.username"
       >
-        <!-- {{ enemiesData }} -->
         <v-sheet class="pa-2 ma-2">
-          <v-card color="indigo" style="text-align: center"
-            ><p>
+          <v-card color="indigo" style="text-align: center">
+            <v-avatar
+              v-if="Enemy.Enemy.avatar === undefined"
+              color="info"
+              size="50"
+              style="margin-top: 5px"
+            >
+              <v-icon icon="mdi-account-circle" style="scale: 4"></v-icon>
+            </v-avatar>
+            <v-avatar v-else size="50" style="margin-top: 5px">
+              <v-img alt="Avatar" :src="Enemy.Enemy.avatar.url"></v-img>
+            </v-avatar>
+            <p>
               <strong>{{ Enemy.Enemy.username }}</strong>
-            </p></v-card
-          >
+            </p>
+          </v-card>
           <v-radio-group v-model="Enemy.MissmatchValue" @change="handleChange">
             <v-radio
               v-for="(MissmatchValue, index) in Enemy.MissmatchValues"
@@ -67,16 +73,14 @@
             ></v-radio>
             <hr />
             <!-- Добавляем опцию для снятия выбора -->
-            <v-radio :label="'Нет совпадений'" :value="null"></v-radio>
+            <!-- <v-radio :label="'Нет совпадений'" :value="null"></v-radio> -->
           </v-radio-group>
         </v-sheet>
       </v-col>
-      <!-- {{ matches }} -->
       <v-container v-if="mismatches.length > 0">
         <v-row>
           <v-col>
             <v-card>
-              <!-- <v-card-title>Результаты:</v-card-title> -->
               <v-card-text>
                 <v-row
                   class="hover"
@@ -90,15 +94,6 @@
                   </v-col>
                 </v-row>
               </v-card-text>
-              <!-- <v-card-actions>
-                    <v-btn
-                      v-if="selectedMatchIndex !== null"
-                      color="error"
-                      @click="removeSelectedMatch"
-                    >
-                      Удалить выбранное совпадение
-                    </v-btn>
-                  </v-card-actions> -->
             </v-card>
           </v-col>
         </v-row>
@@ -113,7 +108,6 @@
         </v-card-actions>
       </v-container>
     </v-row>
-    <!-- <div>{{ matches }}</div> -->
     <v-btn class="ma-2" color="primary" @click="fixMismatch">
       Зафиксировать совпадение
     </v-btn>
@@ -128,16 +122,11 @@
         v-else
         color="primary"
         @click="mismatchScoreDuel(mismatches), enemyMove()"
-        >Закончить дуэль!</v-btn
+        >Закончить</v-btn
       >
     </v-card-actions>
-    <!-- {{ selectedGame?.GameCreator.username }} -->
-    <!-- {{ mismatches }} -->
-    <!-- {{ mismatchScore }} -->
-    Score: {{ score }}
-    <!-- {{ nonEmptyCounts }} -->
+    <!-- Score: {{ score }} -->
   </v-card>
-  <!-- </v-dialog> -->
 </template>
 
 <script setup lang="ts">
@@ -152,11 +141,10 @@ import { ref } from "vue";
 import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
+import { useDisplay } from "vuetify";
 
 const sessionStore = useSessionStore();
 const { userId } = storeToRefs(sessionStore);
-// const { avatar } = storeToRefs(sessionStore);
-// const { setAvatar } = sessionStore;
 
 const gameStore = useGameStore();
 const {
@@ -168,7 +156,6 @@ const {
   gamesData,
   matches,
   mismatches,
-  // selectedMatchIndex,
   selectedMismatchIndex,
   matchScore,
   mismatchScore,
@@ -182,7 +169,7 @@ const {
   closeGame,
   addMatch,
   addMismatch,
-  resetMatches,
+  // resetMatches,
   // selectMatch,
   // selectMismatch,
   // removeSelectedMismatch,
@@ -196,33 +183,32 @@ const {
   mergeGameData,
 } = gameStore;
 
+const fixClick = ref(false);
+
+const { mobile } = useDisplay();
+const sm = useDisplay().sm;
+const xs = useDisplay().xs;
+
 const handleChange = (value) => {
   if (value === null) {
     selectedGame.value.MissmatchValue = null;
   }
 };
 
-const fixClick = ref(false);
-// const score = ref<any[]>([]);
-
 const fixMismatch = () => {
   fixClick.value = true;
   const matchObject = {};
-  // const username = selectedGame.value.GameCreator.username
 
   // Добавляем собственное значение
   if (selectedGame.value.MissmatchValue !== null) {
-    // matchObject[selectedGame.value.GameCreator.username] =
     matchObject[selectedGame.value.GameCreator.objectId] =
       selectedGame.value.MissmatchValue;
   } else {
-    // matchObject[selectedGame.value.GameCreator.username] = null;
     matchObject[selectedGame.value.GameCreator.objectId] = null;
   }
 
   // Добавляем значения соперников
   selectedGame.value.EnemyData.forEach((enemy) => {
-    // matchObject[enemy.Enemy.username] = enemy.MissmatchValue;
     matchObject[enemy.Enemy.objectId] = enemy.MissmatchValue;
   });
 
@@ -243,21 +229,6 @@ const toggleSelectMatch = (index) => {
 // Функция для подсчета непустых значений
 async function countEmptyValues(mismatches) {
   const counts = {};
-
-  // Проход по каждому объекту в массиве совпадений
-  // mismatches.forEach((mismatch) => {
-  //   for (const user in mismatch) {
-  //     if (mismatch.hasOwnProperty(user)) {
-  //       // Увеличиваем счетчик, если значение не пустое
-  //       if (mismatch[user] === null) {
-  //         if (!counts[user]) {
-  //           counts[user] = 0;
-  //         }
-  //         counts[user]++;
-  //       }
-  //     }
-  //   }
-  // });
 
   // Проход по каждому объекту в массиве совпадений
   mismatches.forEach((mismatch) => {
@@ -296,9 +267,6 @@ async function countEmptyValues(mismatches) {
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
 
-  //   Ищем объект по id
-  // const gameObject = await query.get(selectedGame.value.objectId);
-
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
     const gameObject = await query.get(selectedGame.value.objectId);
@@ -331,6 +299,7 @@ async function mismatchScoreDuel(mismatches) {
 }
 
 async function saveScore() {
+  setLoadingValue(true);
   // Находим максимальное количество очков
   const maxScore = Math.max(...score.value.map((item) => item[1]));
 
@@ -350,9 +319,6 @@ async function saveScore() {
   // Добавляем условие, чтобы получить пользователей, чьи objectId находятся в массиве
   queryUsers.containedIn("objectId", topScorers);
 
-  // Ищем объект по id
-  // const gameObject = await query.get(selectedGame.value.objectId);
-
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
     const gameObject = await query.get(selectedGame.value.objectId); // замените OBJECT_ID на ID нужного объекта
@@ -361,7 +327,6 @@ async function saveScore() {
     // Устанавливаем значение столбца Score
     gameObject.set("Score", score.value);
     gameObject.set("Finish", true);
-    // gameObject.set("Winners", topScorers);
     const relation = gameObject.relation("Winners");
     relation.add(users);
 
@@ -371,6 +336,7 @@ async function saveScore() {
     await fetchGames();
     await getGamesByEnemy(userId.value);
     await mergeGameData(gamesData.value, strangersData.value);
+    setLoadingValue(false);
     console.log("Score successfully saved!");
   } catch (error) {
     console.error("Error while saving Score:", error);
@@ -378,6 +344,8 @@ async function saveScore() {
 }
 
 async function enemyMove() {
+  closeGame();
+  setLoadingValue(true);
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
   try {
@@ -386,13 +354,12 @@ async function enemyMove() {
 
     // Устанавливаем значение столбца Score
     gameObject.set("WaitEnemy", true);
-
-    closeGame();
     // Сохраняем изменения
     await gameObject.save();
     await fetchGames();
     await getGamesByEnemy(userId.value);
     await mergeGameData(gamesData.value, strangersData.value);
+    setLoadingValue(false);
     console.log("Score successfully saved!");
   } catch (error) {
     console.error("Error while saving Score:", error);

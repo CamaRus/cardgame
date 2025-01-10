@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="duel" width="auto" @update:modelValue="onDuelMenuClose">
     <v-card width="100%" style="padding: 15px; text-align: center">
-      {{ selectedGame?.objectId }}
+      <!-- {{ selectedGame?.objectId }} -->
       <h3>Тема игры на совпадение:</h3>
       {{ selectedGame?.CoincidenceTheme }}
       <v-select
@@ -17,9 +17,11 @@
         label="Сделайте ставку (количество несовпадений)"
         :items="[1, 2, 3, 4, 5, 6]"
       ></v-select>
+      <!-- User ID: {{ userId }} -->
+      <!-- {{ selectedGame.GameCreator.objectId }} -->
       <template v-slot:actions>
         <v-btn
-          v-if="selectedGame.GameCreator === userId"
+          v-if="selectedGame.GameCreator.objectId === userId"
           class="ms-auto"
           text="Ok"
           @click="duelMenu(false, selectedGame), saveDuelRates()"
@@ -27,7 +29,7 @@
         <v-btn
           v-else
           class="ms-auto"
-          text="Ok (дуэль)"
+          text="Ok"
           @click="duelMenu(false, selectedGame), saveDuelRatesAndFinish()"
         ></v-btn>
       </template>
@@ -78,7 +80,6 @@ const {
   mergeGameData,
 } = gameStore;
 
-// const matchRate = [1, 2, 3, 4, 5, 6];
 const matchRate = ref<number | null>(1);
 const mismatchRate = ref<number | null>(1);
 
@@ -90,13 +91,14 @@ const onDuelMenuClose = (isOpen: boolean) => {
 };
 
 async function saveDuelRates() {
+  setLoadingValue(true);
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
   console.log("Object Id: ", selectedGame.value.objectId);
   console.log("Match Rate: ", matchRate.value);
   console.log("Mismatch Rate: ", mismatchRate.value);
   //   Ищем объект по id
-  const gameObject = await query.get(selectedGame.value.objectId);
+  // const gameObject = await query.get(selectedGame.value.objectId);
 
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
@@ -115,6 +117,7 @@ async function saveDuelRates() {
     await fetchGames();
     await getGamesByEnemy(userId.value);
     await mergeGameData(gamesData.value, strangersData.value);
+    setLoadingValue(false);
   } catch (error) {
     console.error("Error while saving Score:", error);
   }
@@ -125,9 +128,6 @@ async function saveDuelRatesAndFinish() {
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
 
-  //   Ищем объект по id
-  // const gameObject = await query.get(selectedGame.value.objectId);
-
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
     const gameObject = await query.get(selectedGame.value.objectId);
@@ -135,7 +135,6 @@ async function saveDuelRatesAndFinish() {
     // Устанавливаем значение столбца Score
     gameObject.set("MatchRateEnemy", matchRate.value);
     gameObject.set("MismatchRateEnemy", mismatchRate.value);
-    // gameObject.set("Duel", true);
     console.log("MatchScoreDuel: ", selectedGame.value.MatchScoreDuel);
     console.log("MismatchScoreDuel: ", selectedGame.value.MismatchScoreDuel);
     let GameCreatorPointsMatch = 0;
@@ -188,28 +187,13 @@ async function saveDuelRatesAndFinish() {
     const EnemyPoints = EnemyPointsMatch + EnemyPointsMismatch;
     console.log("GameCreatorPoints: ", GameCreatorPoints);
     console.log("EnemyPoints: ", EnemyPoints);
-    // console.log("GameCreator: ", selectedGame.value.GameCreator.objectId);
-    // console.log("My Id: ", userId.value);
     if (GameCreatorPoints > EnemyPoints) {
-      // console.log(selectedGame.value.GameCreator.objectId);
-      // gameObject.set("Winners", topScorers);
-
-      // Добавляем условие, чтобы получить пользователей, чьи objectId находятся в массиве
-      // queryUser.containedIn(
-      //   "objectId",
-      //   selectedGame.value.GameCreator.objectId
-      // );
       const queryUser = new Parse.Query(Parse.User);
       queryUser.equalTo("objectId", selectedGame.value.GameCreator.objectId);
       const user = await queryUser.find();
       const relation = gameObject.relation("Winners");
       relation.add(user);
     } else if (EnemyPoints > GameCreatorPoints) {
-      // console.log(userId.value);
-      // const queryUser = new Parse.Query(Parse.User);
-
-      // Добавляем условие, чтобы получить пользователей, чьи objectId находятся в массиве
-      // queryUser.containedIn("objectId", userId.value);
       const queryUser = new Parse.Query(Parse.User);
       queryUser.equalTo("objectId", userId.value);
       const user = await queryUser.find();
@@ -217,18 +201,10 @@ async function saveDuelRatesAndFinish() {
       relation.add(user);
     } else {
       console.log("Ничья!");
-      // let winners = [selectedGame.value.GameCreator.objectId, userId.value];
-      // const queryUsers = new Parse.Query(Parse.User);
-      // queryUsers.containedIn("objectId", winners);
-      // const users = await queryUsers.find();
-      // const relation = gameObject.relation("Winners");
-      // relation.add(users);
     }
     gameObject.set("Finish", true);
     gameObject.set("WaitEnemy", false);
-    // Сохраняем изменения
     await gameObject.save();
-    // console.log("Score successfully saved!");
     matchRate.value = 1;
     mismatchRate.value = 1;
     await fetchGames();
@@ -238,29 +214,6 @@ async function saveDuelRatesAndFinish() {
     console.error("Error while saving Score:", error);
   } finally {
     setLoadingValue(false);
-  }
-}
-
-async function calculationOfDuelResults() {
-  const Game = Parse.Object.extend("Games");
-  const query = new Parse.Query(Game);
-  try {
-    // Предположим, что у вас уже есть объект Game, который вы хотите обновить
-    const gameObject = await query.get(selectedGame.value.objectId);
-
-    // Устанавливаем значение столбца Score
-    // gameObject.set("Duel", true);
-
-    // Сохраняем изменения
-    // await gameObject.save();
-    // console.log("Score successfully saved!");
-    // matchRate.value = 1;
-    // mismatchRate.value = 1;
-    // fetchGames();
-    // getGamesByEnemy(userId.value);
-    // mergeGameData(gamesData.value, strangersData.value);
-  } catch (error) {
-    console.error("Error while saving Score:", error);
   }
 }
 </script>

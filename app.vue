@@ -1,15 +1,7 @@
 <template>
   <div class="scroll">
     <v-app>
-      <!-- <NuxtWelcome /> -->
       <NuxtPage :page-key="(route) => route.fullPath" />
-      <!-- <auth-reg></auth-reg> -->
-      <!-- <div>{{}}</div> -->
-      <!-- <header-menu></header-menu> -->
-      <!-- {{ valid }} -->
-      <!-- {{ userdata }} -->
-      <!-- {{ localStorageData }} -->
-      <!-- <exit-button></exit-button> -->
     </v-app>
   </div>
 </template>
@@ -17,18 +9,6 @@
 <script setup lang="ts">
 import Parse from "parse";
 import { ref, onMounted, onBeforeMount } from "vue";
-
-import { useSessionStore } from "./store/session";
-import { useGameStore } from "./store/game";
-import { storeToRefs } from "pinia";
-
-const sessionStore = useSessionStore();
-const gameStore = useGameStore();
-const { isValid } = sessionStore;
-// const { userf } = sessionStore;
-const { userdata } = storeToRefs(sessionStore);
-const { valid } = storeToRefs(sessionStore);
-// const valid = sessionStore.valid;
 
 Parse.initialize(
   "4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW",
@@ -62,61 +42,22 @@ useHead({
 });
 
 // Создаем реактивную переменную для хранения данных localStorage
-const localStorageData = ref<string[]>([]);
+// const localStorageData = ref<string[]>([]);
 
 // Функция для получения и вывода данных из localStorage
-const getAllLocalStorageData = () => {
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const value = localStorage.getItem(key);
-    console.log("Key:", key, "Value:", value);
-    localStorageData.value.push(`Key: ${key}, Value: ${value}`);
-  }
-  // console.log(valid);
-
-  // if (
-  //   localStorage.getItem(
-  //     "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/installationId"
-  //   )
-  // ) {
-  //   isValid(true);
-  // }
-};
-
-// const validFunc = () => {
-//   isValid("100");
+// const getAllLocalStorageData = () => {
+//   for (let i = 0; i < localStorage.length; i++) {
+//     const key = localStorage.key(i);
+//     const value = localStorage.getItem(key);
+//     console.log("Key:", key, "Value:", value);
+//     localStorageData.value.push(`Key: ${key}, Value: ${value}`);
+//   }
 // };
 
-// const changeOverflow = () => {
-//   document.body.style.overflow = "hidden";
-// };
-
-// Вызываем функцию при монтировании компонента
-// onMounted(changeOverflow);
-onBeforeMount(getAllLocalStorageData);
-// onBeforeMount(userf);
-// console.log(
-//   "local: ",
-//   localStorage.getItem(
-//     "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/installationId"
-//   )
-// )
+// onBeforeMount(getAllLocalStorageData);
 </script>
 
-<!-- <script setup>
-import { useSessionStore } from "./store/session";
-import { storeToRefs } from "pinia";
-
-const sessionStore = useSessionStore();
-const isValid = sessionStore;
-const valid = storeToRefs(sessionStore);
-</script> -->
-
 <style>
-/* html,
-body {
-  overflow: hidden;
-} */
 .page-enter-active,
 .page-leave-active {
   transition: all 0.4s;

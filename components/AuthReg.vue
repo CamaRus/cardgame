@@ -31,11 +31,7 @@
               </div>
             </v-form>
           </v-card-text>
-          {{ this.errorCode }}
           <hr />
-          <!-- {{ valid }} -->
-          <!-- {{ getSessionsData() }} -->
-          <!-- <button @click="addValueToSessionToken('inputVal')">+</button> -->
         </v-tabs-window-item>
 
         <v-tabs-window-item value="reg">
@@ -70,50 +66,11 @@
         </v-tabs-window-item>
       </v-tabs-window>
     </v-card>
-
-    <!-- <v-card>
-      <v-card-title class="headline">Регистрация</v-card-title>
-      <v-card-text>
-        <v-form @submit.prevent="registerUser">
-          <v-text-field
-            v-model="registerForm.username"
-            label="Имя пользователя"
-          ></v-text-field>
-          <v-text-field
-            v-model="registerForm.email"
-            label="Email"
-          ></v-text-field>
-          <v-text-field
-            v-model="registerForm.password"
-            label="Пароль"
-            type="password"
-          ></v-text-field>
-          <v-btn type="submit" color="primary">Зарегистрироваться</v-btn>
-        </v-form>
-      </v-card-text>
-    </v-card>
-
-    <v-card>
-      <v-card-title class="headline">Авторизация</v-card-title>
-      <v-card-text>
-        <v-form @submit.prevent="loginUser">
-          <v-text-field v-model="loginForm.email" label="Email"></v-text-field>
-          <v-text-field
-            v-model="loginForm.password"
-            label="Пароль"
-            type="password"
-          ></v-text-field>
-          <v-btn type="submit" color="primary">Войти</v-btn>
-        </v-form>
-      </v-card-text>
-    </v-card> -->
   </v-container>
 </template>
 
 <script>
-// import { B4aUser } from "back4app";
 import Parse from "parse";
-
 export default {
   data() {
     return {
@@ -127,7 +84,6 @@ export default {
         password: "",
       },
       tab: null,
-      // valid: false,
       errorCode: null,
       nameRules: [
         (value) => {
@@ -182,24 +138,7 @@ export default {
         console.log("Key:", key, "Value:", value);
         localStorageData.value.push(`Key: ${key}, Value: ${value}`);
       }
-      // console.log(
-      //   localStorage.getItem(
-      //     "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/currentUser"
-      //   )
-      // );
     },
-    // async registerUser() {
-    //   try {
-    //     const user = new B4aUser();
-    //     user.setUsername(this.registerForm.username);
-    //     user.setEmail(this.registerForm.email);
-    //     user.setPassword(this.registerForm.password);
-    //     await user.signUp();
-    //     this.$router.push("/dashboard"); // Redirect to dashboard after successful registration
-    //   } catch (error) {
-    //     console.error("Registration Error:", error);
-    //   }
-    // },
 
     registerUser() {
       // Create a new instance of the user class
@@ -225,15 +164,6 @@ export default {
         });
     },
 
-    // async loginUser() {
-    //   try {
-    //     await B4aUser.logIn(this.loginForm.email, this.loginForm.password);
-    //     this.$router.push("/dashboard");
-    //   } catch (error) {
-    //     console.error("Login Error:", error);
-    //   }
-    // },
-
     async loginUser() {
       // Create a new instance of the user class
       var user = await Parse.User.logIn(
@@ -241,8 +171,6 @@ export default {
         this.loginForm.password
       )
         .then((user) => {
-          // localStorage.setItem("sessionToken", 1);
-          // this.valid = true;
           this.$router.push("/");
           var currentUser = Parse.User.current();
 
@@ -252,8 +180,7 @@ export default {
 
             // Выводим sessionToken в консоль или используем его в приложении
             console.log("Session token текущего пользователя:", sessionToken);
-            // localStorage.setItem("sessionToken", sessionToken);
-            // console.log("localStorage", localStorage);
+            localStorage.setItem("sessionToken", sessionToken);
           } else {
             console.log("Пользователь не авторизован.");
           }
@@ -272,9 +199,6 @@ export default {
     },
 
     getSessionsData() {
-      // const sessions = Parse.Object.extend("Session");
-      // const query = new Parse.Query(sessions);
-
       var query = new Parse.Query(Parse.Session);
       query
         .find()
@@ -305,15 +229,6 @@ export default {
   },
 };
 </script>
-
-<!-- <script setup>
-import { useSessionStore } from "~/store/session";
-import { storeToRefs } from "pinia";
-
-const sessionStore = useSessionStore();
-const { addValueToSessionToken } = sessionStore;
-const { sessionToken } = storeToRefs(sessionStore);
-</script> -->
 
 <style scoped>
 .container {

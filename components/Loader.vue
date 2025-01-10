@@ -9,13 +9,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from "vue";
-
-// const loading = ref(false);
-
-// export { loading };
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .loader {

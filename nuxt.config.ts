@@ -5,7 +5,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   hooks: {},
   ssr: false,
-  css: ["@/assets/css/global.css"],
+  css: [
+    "@/assets/css/global.css",
+    "@fortawesome/fontawesome-svg-core/styles.css",
+  ],
   build: {
     transpile: ["vuetify"],
   },
@@ -31,11 +34,7 @@ export default defineNuxtConfig({
   },
   plugins: [
     "~/plugins/vuetify",
-    "~/plugins/test",
-    // { src: "~/plugins/back4app.js", mode: "client" },
-    // "~/plugins/back4app",
+    "~/plugins/validation",
+    "~/plugins/fontawesome.js",
   ],
-  // alias: {
-  //   pinia: "/node_modules/@pinia/nuxt/node_modules/pinia/dist/pinia.mjs",
-  // },
 });

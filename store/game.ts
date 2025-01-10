@@ -6,14 +6,7 @@ Parse.initialize(
 );
 Parse.serverURL = "https://parseapi.back4app.com/";
 
-// import { storeToRefs } from "pinia";
-
-// import { useSessionStore } from "../store/session";
-// import { useSessionStore } from "../store/session";
-
 import { useSessionStore } from "./session";
-// const sessionStore = useSessionStore();
-// const { username } = storeToRefs(sessionStore);
 
 export const useGameStore = defineStore("gameStore", () => {
   const sessionStore = useSessionStore();
@@ -25,101 +18,54 @@ export const useGameStore = defineStore("gameStore", () => {
   const gameTheme = ref<string | null>(null);
   const gameMismatchTheme = ref<string | null>(null);
   const gameId = ref<string | null>(null);
-  // const keyForRerender = ref(0);
-
-  // const gamesData = ref<any[]>([]);
   const gamesData = ref<Parse.Object[]>([]);
   const strangersData = ref<Parse.Object[]>([]);
   const enemyGame = ref(false);
   const myDataInEnemyGame = ref<any[]>([]);
   const remainingEnemyData = ref<any[]>([]);
-  // const gamesData2 = ref<Parse.Object[]>([]);
+  const rules = ref(false);
+  const selectedGame = ref<any>(null);
+  const gameVisible = ref(false);
+  const confirmation = ref(false);
+  const scoreboardWindow = ref(false);
+  const confirmationArray = ref<any[]>([]);
+  const relatedEnemies = ref<any[]>([]);
+  const enemiesData = ref<any[]>([]);
+  const tooltipText = ref<string | null>("Нажмите, чтобы копировать ID игры");
+  const duel = ref(false);
+  const winner = ref<number | null>(null);
+  const randomTopicMatch = ref<string | null>(null);
+  const randomTopicMismatch = ref<string | null>(null);
+  const maxPlayers = ref(false);
+  const matches = ref<Array<Record<string, string | null>>>([]);
+  const mismatches = ref<Array<Record<string, string | null>>>([]);
+  const selectedMatchIndex = ref(null); // Индекс выбранной строки
+  const selectedMismatchIndex = ref(null); // Индекс выбранной строки
+  const matchScore = ref<any[]>([]);
+  const mismatchScore = ref<any[]>([]);
+  const finishMatchGame = ref(false);
+  const finishMatchGameArray = ref<any[]>([]);
+  const score = ref<any[]>([]);
+  const matchValues = ref<any[]>([]);
+  const mismatchValues = ref<any[]>([]);
+  const gameCreatorName = ref<string | null>(null);
+  const gameCreatorAvatar = ref<string | null>(null);
+  const gameCreatorId = ref<string | null>(null);
+  const headerHeight = ref(0);
 
-  //////fetchGames
-  // const fetchGames = async () => {
-  //   setLoadingValue(true);
-  //   const currentUser = Parse.User.current();
-
-  //   if (!currentUser) {
-  //     console.error("No user is currently logged in");
-  //     return;
-  //   }
-
-  //   const Game = Parse.Object.extend("Games");
-  //   const query1 = new Parse.Query(Game);
-
-  //   // Добавляем условие, чтобы получать только игры текущего пользователя
-  //   query1.equalTo("GameCreator", currentUser);
-
-  //   try {
-  //     const results1 = await query1.find();
-
-  //     // Проходим по всем найденным и незавершённым играм
-  //     const gamesWithEnemyData = await Promise.all(
-  //       results1.map(async (game) => {
-  //         const gameJson = game.toJSON();
-
-  //         // Получаем данные из отношения EnemyData
-  //         const enemyDataRelation = game.relation("EnemyData");
-  //         const enemyDataQuery = enemyDataRelation.query();
-
-  //         try {
-  //           const enemyDataResults = await enemyDataQuery.find();
-
-  //           // Проходим по всем найденным записям в EnemyData
-  //           const enemyDataJson = await Promise.all(
-  //             enemyDataResults.map(async (enemyData) => {
-  //               const enemyDataObj = enemyData.toJSON();
-
-  //               // Получаем данные из указателя Enemy
-  //               const enemyPointer = enemyData.get("Enemy");
-  //               if (enemyPointer) {
-  //                 const enemyQuery = new Parse.Query(Parse.User);
-  //                 try {
-  //                   const enemy = azzwait enemyQuery.get(enemyPointer.id);
-  //                   enemyDataObj.Enemy = enemy.toJSON();
-  //                 } catch (error) {
-  //                   console.error("Error while fetching enemy data:", error);
-  //                 }
-  //               }
-
-  //               return enemyDataObj;
-  //             })
-  //           );
-
-  //           gameJson.EnemyData = enemyDataJson;
-  //         } catch (error) {
-  //     blKVwVKH8E      console.error("Error while fetching enemy data relation:", error);
-  //         }
-
-  //         return gameJson;
-  //       })
-  //     );
-
-  //     setGames(gamesWithEnemyData);
-  //     console.log(gamesWithEnemyData);
-  //   } catch (error) {
-  //     console.error("Error while fetching games:", error);
-  //   } finally {
-  //     setLoadingValue(false);
-  //   }
-  // };
-  ///////fetchGames
-
-  // Функция для сравнения старых и новых данных
+  // Функция для сравнения старых и новых данных своих игр
   const isDataChanged = (newData) => {
     // Преобразуем в строку для простого сравнения (можно улучшить логику)
     return JSON.stringify(newData) !== JSON.stringify(gamesData.value);
   };
 
-  // Функция для сравнения старых и новых данных
+  // Функция для сравнения старых и новых данных чужих игр
   const isDataStrangersChanged = (newData) => {
     // Преобразуем в строку для простого сравнения (можно улучшить логику)
     return JSON.stringify(newData) !== JSON.stringify(strangersData.value);
   };
 
   const createGame = async () => {
-    // setLoadingValue(true);
     // Получаем текущего пользователя
     const currentUser = Parse.User.current();
 
@@ -152,28 +98,26 @@ export const useGameStore = defineStore("gameStore", () => {
 
     newGame.set("MatchValues", matchValues.value);
     newGame.set("MissmatchValues", mismatchValues.value);
+    newGame.set("Players", 1);
 
     try {
       // Сохраняем объект
       const result = await newGame.save();
-      // this.setClickItem(this.clickedItem);
       console.log("New game created successfully");
 
-      // Сохранение id игры в localStorage
-      // localStorage.setItem("gameId", result.id);
-      console.log("Game ID saved to localStorage:", result.get("GameCreator"));
-      // await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
+      // console.log("Game ID saved to localStorage:", result.get("GameCreator"));
+      setGameTheme(null);
+      setGameMismatchTheme(null);
+      setRandomTopicMatch(null);
+      setRandomTopicMismatch(null);
     } catch (error) {
       console.error("Error while creating new game:", error);
     } finally {
-      // setLoadingValue(false); // Скрываем загрузчик
-      fetchGames();
+      await fetchGames();
     }
   };
 
-  //////////fetchGames2
   const fetchGames = async () => {
-    // setLoadingValue(true);
     const currentUser = Parse.User.current();
 
     if (!currentUser) {
@@ -183,18 +127,12 @@ export const useGameStore = defineStore("gameStore", () => {
 
     const Game = Parse.Object.extend("Games");
     const query1 = new Parse.Query(Game);
-    // const query2 = new Parse.Query(Game);
 
     // Добавляем условие, чтобы получать только игры текущего пользователя
     query1.equalTo("GameCreator", currentUser);
-    // Добавляем условие, чтобы получать только завершенные игры
-    // query1.equalTo("Finish", false);
-    // query2.equalTo("GameCreator", currentUser);
-    // query2.equalTo("Finish", true);
 
     try {
       const results1 = await query1.find();
-      // const results2 = await query2.find();
 
       // Проходим по всем найденным и незавершённым играм
       const gamesWithEnemyData = await Promise.all(
@@ -241,48 +179,37 @@ export const useGameStore = defineStore("gameStore", () => {
                 return winnerDataObj;
               })
             );
-
-            // catch (error) {
-            //   console.error("Error while fetching winner data relation:", error);
-            // }
-
             gameJson.EnemyData = enemyDataJson;
             gameJson.WinnerData = winnerDataJson;
           } catch (error) {
             console.error("Error while fetching enemy data relation:", error);
           }
-
           return gameJson;
         })
       );
       const newData = results1.map((result) => result.toJSON());
       // Сравнение с текущими данными
       if (isDataChanged(newData)) {
-        // setLoadingValue(true);
         setGames(gamesWithEnemyData);
       }
-      // setGames(gamesWithEnemyData);
-      console.log(gamesWithEnemyData);
-      // console.log("Finish Games: ", results2);
+      // console.log(gamesWithEnemyData);
     } catch (error) {
       console.error("Error while fetching games:", error);
     } finally {
-      // setLoadingValue(false);
     }
   };
-  //////////fetchGames2
 
+  // Слияние данных своих и чужих игр
   async function mergeGameData(array1, array2) {
     // Добавляем все объекты из array2 в array1
     array2.forEach((game) => {
       array1.push(game);
     });
-
-    // Возвращаем обновленный первый массив
-    // return array1;
-    console.log(array1);
+    array1.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // console.log(array1);
   }
 
+  // Получение данных чужих игр
   async function getGamesByEnemy(enemyId: any) {
     try {
       // Создаём указатель на пользователя (Enemy)
@@ -349,10 +276,6 @@ export const useGameStore = defineStore("gameStore", () => {
               })
             );
 
-            // catch (error) {
-            //   console.error("Error while fetching winner data relation:", error);
-            // }
-
             gameJson.EnemyData = enemyDataJson;
             gameJson.WinnerData = winnerDataJson;
           } catch (error) {
@@ -365,14 +288,9 @@ export const useGameStore = defineStore("gameStore", () => {
       const newData = games.map((result) => result.toJSON());
       // Сравнение с текущими данными
       if (isDataStrangersChanged(newData)) {
-        // setLoadingValue(true);
         setStrangersGames(gamesWithEnemyData);
       }
-      // setGames(gamesWithEnemyData);
-      console.log(gamesWithEnemyData);
-      // console.log("Finish Games: ", results2);
-
-      // return games;
+      // console.log(gamesWithEnemyData);
     } catch (error) {
       console.error("Error fetching games by enemy:", error);
     }
@@ -382,13 +300,12 @@ export const useGameStore = defineStore("gameStore", () => {
   function setClickItem(clickedItem) {
     clickItem.value = clickedItem;
     start.value = true;
-    console.log("setClickItem!!!", clickItem.value);
+    // console.log("setClickItem!!!", clickItem.value);
   }
 
   //Функция установления Id присоединённой игры
   function setGameId(id) {
     gameId.value = id;
-    // console.log("Game Match Theme: ", gameTheme.value);
   }
 
   //Функция установления темы игры (совпадение)
@@ -413,34 +330,15 @@ export const useGameStore = defineStore("gameStore", () => {
     loading.value = newLoadingValue;
   }
 
-  //Функция передачи данных с сервера в хранилище
+  //Функция передачи данных в хранилище
   function setGames(getGames) {
     gamesData.value = getGames;
   }
 
+  //Функция передачи данных в хранилище (чужие игры)
   function setStrangersGames(strangersGames) {
     strangersData.value = strangersGames;
   }
-
-  // function forceRerender() {
-  //   keyForRerender.value += 1;
-  // }
-
-  // Game
-
-  const selectedGame = ref<any>(null);
-  const gameVisible = ref(false);
-  const confirmation = ref(false);
-  const scoreboardWindow = ref(false);
-  const confirmationArray = ref<any[]>([]);
-  const relatedEnemies = ref<any[]>([]);
-  const enemiesData = ref<any[]>([]);
-  const tooltipText = ref<string | null>("Нажмите, чтобы копировать ID игры");
-  const duel = ref(false);
-  // const winner = ref(false);
-  const winner = ref<number | null>(null);
-  const randomTopicMatch = ref<string | null>(null);
-  const randomTopicMismatch = ref<string | null>(null);
 
   //Функция установления случайной темы игры (совпадение)
   function setRandomTopicMatch(randomTopic) {
@@ -479,47 +377,43 @@ export const useGameStore = defineStore("gameStore", () => {
     const enemyDataGame = ref<any[]>([]);
     const remainingData = ref<any[]>([]);
     selectedGame.value = game;
-    console.log(
-      "selectedGame.value.WinnerData.length: ",
-      selectedGame.value.WinnerData.length
-    );
+    // console.log(
+    //   "selectedGame.value.WinnerData.length: ",
+    //   selectedGame.value.WinnerData.length
+    // );
     if (selectedGame.value.WinnerData.length > 0) {
-      selectedGame.value.WinnerData.forEach((element) => {
-        if (element.objectId.includes(userId.value)) {
-          winner.value = 1;
-        } else {
-          winner.value = 2;
-        }
-        // console.log("Winner:", element.objectId);
-      });
+      const exists = selectedGame.value.WinnerData.some(
+        (g) => g.objectId === userId.value
+      );
+      if (exists == true) {
+        winner.value = 1;
+      } else {
+        winner.value = 2;
+      }
+
+      // selectedGame.value.WinnerData.forEach((element) => {
+      //   if (element.objectId.includes(userId.value)) {
+      //     winner.value = 1;
+      //   } else {
+      //     winner.value = 2;
+      //   }
+      // });
     } else {
       winner.value = null;
     }
-
-    // Проверяем, существует ли элемент с классом "target-class" в DOM
-    // if (selectedGame.value.WinnerData.includes(userId.value)) {
-    //   winner.value = true;
-    // } else {
-    //   winner.value = false;
-    // }
     scoreboardWindow.value = true;
-    // console.log("Selected Game: ", selectedGame.value.objectId);
-    // console.log("Username: ", username.value);
-    console.log("Winners: ", selectedGame.value.WinnerData);
-    console.log("winner: ", winner.value);
-    console.log("Game Creator: ", selectedGame.value.GameCreator);
-    console.log("User ID: ", userId.value);
-    // console.log(selectedGame.value.objectId);
+    // console.log("Winners: ", selectedGame.value.WinnerData);
+    // console.log("winner: ", winner.value);
+    // console.log("Game Creator: ", selectedGame.value.GameCreator);
+    // console.log("User ID: ", userId.value);
     if (selectedGame.value.GameCreator.objectId === userId.value) {
       enemyGame.value = false;
-      selectedGame.value.EnemyData.forEach((element) => {
-        console.log(element.Enemy.objectId);
-      });
-      // console.log(selectedGame.value.EnemyData);
+      // selectedGame.value.EnemyData.forEach((element) => {
+      //   console.log(element.Enemy.objectId);
+      // });
     } else {
       enemyGame.value = true;
-      // console.log(selectedGame.value.EnemyData.Enemy);
-      // Проходим по каждому объекту массива
+      findGameCreatorData(selectedGame.value.GameCreator.objectId);
       selectedGame.value.EnemyData.forEach((item: any) => {
         // Проверяем, совпадает ли objectId у Enemy
         if (item.Enemy.objectId === userId.value) {
@@ -529,10 +423,33 @@ export const useGameStore = defineStore("gameStore", () => {
           remainingData.value.push(item);
           remainingEnemyData.value = remainingData.value;
         }
-        // remainingEnemyData.value = remainingData
       });
-      console.log(enemyDataGame.value);
-      console.log("Enemy Game: ", enemyGame.value);
+      // console.log(enemyDataGame.value);
+      // console.log("Enemy Game: ", enemyGame.value);
+    }
+  }
+
+  async function findGameCreatorData(gameCreatorId) {
+    const query = new Parse.Query("_User");
+    query.equalTo("objectId", gameCreatorId);
+
+    try {
+      const user = await query.first(); // Получаем первого совпавшего пользователя
+
+      if (user) {
+        // Извлекаем данные пользователя
+        const username = user.get("username");
+        const email = user.get("email");
+        const createdAt = user.get("createdAt");
+        const avatar = user.get("avatar") ? user.get("avatar").url() : null;
+        gameCreatorName.value = username;
+        gameCreatorAvatar.value = avatar;
+        console.log(gameCreatorAvatar);
+      } else {
+        console.log("Пользователь не найден");
+      }
+    } catch (error) {
+      console.error("Ошибка при поиске пользователя:", error);
     }
   }
 
@@ -544,11 +461,10 @@ export const useGameStore = defineStore("gameStore", () => {
 
   //Функция закрытия окна выбора режимов игры
   async function confirmationWindowClose() {
-    // selectedGame.value = game;
     confirmation.value = false;
   }
 
-  //Функция корирования ID игры
+  //Функция копирования ID игры
   async function copyGameId(game: any) {
     selectedGame.value = game;
     try {
@@ -562,117 +478,37 @@ export const useGameStore = defineStore("gameStore", () => {
     } catch (err) {
       console.error("Ошибка при копировании текста: ", err);
     }
-  }
-
-  //////////fetchGames2
-  const getAllGames = async () => {
-    // setLoadingValue(true);
-    try {
-      const currentUser = Parse.User.current();
-
-      if (!currentUser) {
-        console.error("No user is currently logged in");
-        return;
-      }
-
-      const Game = Parse.Object.extend("Games");
-      const query1 = new Parse.Query(Game);
-      // const query2 = new Parse.Query(Game);
-
-      // Добавляем условие, чтобы получать только игры текущего пользователя
-      query1.equalTo("GameCreator", currentUser);
-      // Добавляем условие, чтобы получать только завершенные игры
-      // query1.equalTo("Finish", false);
-      // query2.equalTo("GameCreator", currentUser);
-      // query2.equalTo("Finish", true);
-
-      // Создаём указатель на пользователя (Enemy)
-      // const EnemyPointer = new Parse.User();
-      // EnemyPointer.id = currentUser.Id;
-
-      // Создаём запрос на Games
-      // const query2 = new Parse.Query("Games");
-
-      // Создаём подзапрос на Relation (EnemyData), чтобы найти записи с нужным Enemy
-      // const enemyDataQuery = new Parse.Query("EnemyData");
-      // enemyDataQuery.equalTo("Enemy", EnemyPointer);
-
-      // Добавляем фильтр в основной запрос
-      // query2.matchesQuery("EnemyData", enemyDataQuery);
-
-      // Выполняем запрос
-
-      const results1 = await query1.find();
-      // const results2 = await query2.find();
-      console.log("Results 1: ", results1);
-      // console.log(currentUser.id);
-      // console.log("Results 2: ", results2);
-    } catch (error) {
-      console.error("Error fetching games by enemy:", error);
-    }
   };
-  //////////fetchGames2
 
-  // async function openGame(game: any) {
-  //   setLoadingValue(true);
-
+  // const getAllGames = async () => {
   //   try {
-  //     // Получение основного объекта игры
-  //     const Game = Parse.Object.extend("Games");
-  //     const query = new Parse.Query(Game);
-  //     // query.include("GameCreator");
-  //     const result = await query.get(game.objectId);
-  //     selectedGame.value = result.toJSON();
+  //     const currentUser = Parse.User.current();
 
-  //     // Загрузка связанных объектов через Relation
-  //     const relation = result.relation("EnemyData");
-  //     const enemyQuery = relation.query();
-  //     const enemies = await enemyQuery.find();
-  //     relatedEnemies.value = enemies.map((enemy) => enemy.toJSON());
-  //     console.log(relatedEnemies.value);
-
-  //     const users = [];
-  //     for (const item of relatedEnemies.value) {
-  //       if (item.Enemy && item.Enemy.objectId) {
-  //         const enemy = new Parse.Query(Parse.User);
-  //         // const user = await query.get(objectId);
-  //         const user = await enemy.get(item.Enemy.objectId);
-  //         if (user) {
-  //           users.push(user);
-  //           enemiesData.value = users;
-  //         }
-  //       }
+  //     if (!currentUser) {
+  //       console.error("No user is currently logged in");
+  //       return;
   //     }
-  //     console.log("Users: ", users);
+
+  //     const Game = Parse.Object.extend("Games");
+  //     const query1 = new Parse.Query(Game);
+
+  //     // Добавляем условие, чтобы получать только игры текущего пользователя
+  //     query1.equalTo("GameCreator", currentUser);
+
+  //     // Выполняем запрос
+  //     const results1 = await query1.find();
+  //     // console.log("Results 1: ", results1);
   //   } catch (error) {
-  //     console.error("Error while fetching game details:", error);
-  //   } finally {
-  //     setLoadingValue(false);
-  //     gameVisible.value = true;
+  //     console.error("Error fetching games by enemy:", error);
   //   }
-  // }
+  // };
 
   //Функция закрытия окна игры
   const closeGame = () => {
     resetMatches();
     gameVisible.value = false;
     selectedMatchIndex.value = null;
-    // fetchGames();
-    // finishMatchGame.value = false;
   };
-
-  // Matches array
-  const matches = ref<Array<Record<string, string | null>>>([]);
-  const mismatches = ref<Array<Record<string, string | null>>>([]);
-  const selectedMatchIndex = ref(null); // Индекс выбранной строки
-  const selectedMismatchIndex = ref(null); // Индекс выбранной строки
-  const matchScore = ref<any[]>([]);
-  const mismatchScore = ref<any[]>([]);
-  const finishMatchGame = ref(false);
-  const finishMatchGameArray = ref<any[]>([]);
-  const score = ref<any[]>([]);
-  const matchValues = ref<any[]>([]);
-  const mismatchValues = ref<any[]>([]);
 
   function setMatchValues(newMatchValues) {
     matchValues.value = newMatchValues;
@@ -718,14 +554,6 @@ export const useGameStore = defineStore("gameStore", () => {
   const resetMatches = () => {
     matches.value = [];
   };
-
-  // const selectMatch = (index) => {
-  //   selectedMatchIndex.value = index;
-  // };
-
-  // const selectMismatch = (index) => {
-  //   selectedMismatchIndex.value = index;
-  // };
 
   const removeSelectedMatch = () => {
     if (selectedMatchIndex.value !== null) {
@@ -774,12 +602,7 @@ export const useGameStore = defineStore("gameStore", () => {
       return [key, item[key]];
     });
     setScore(transformedArray);
-
-    // return resultArray;
   }
-
-  // Инициализация подписки при монтировании компонента
-  // onMounted(setupLiveQuery);
 
   return {
     fetchGames,
@@ -804,7 +627,7 @@ export const useGameStore = defineStore("gameStore", () => {
     setGames,
     matches,
     addMatch,
-    resetMatches,
+    // resetMatches,
     selectedMatchIndex,
     selectedMismatchIndex,
     // selectMatch,
@@ -847,12 +670,18 @@ export const useGameStore = defineStore("gameStore", () => {
     setGameId,
     matchValues,
     mismatchValues,
-    getAllGames,
+    // getAllGames,
     getGamesByEnemy,
     mergeGameData,
     enemyGame,
     myDataInEnemyGame,
     remainingEnemyData,
+    rules,
+    maxPlayers,
+    gameCreatorName,
+    gameCreatorAvatar,
+    gameCreatorId,
+    headerHeight
     // keyForRerender,
     // forceRerender,
   };

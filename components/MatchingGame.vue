@@ -1,44 +1,39 @@
 <template>
   <v-dialog
     v-model="gameVisible"
-    max-width="800"
     persistent
-    :fullscreen="mobile"
+    :fullscreen="xs || sm"
+    :style="{ width: xs || sm ? '100%' : '1000px' }"
   >
     <v-card v-if="!finishMatchGame">
-      <v-toolbar
-        ><v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title>
-        <v-spacer></v-spacer>
+      <v-toolbar>
+        <!-- <v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title> -->
+        <v-spacer> </v-spacer>
         <v-btn icon="mdi-close" @click="closeGame"></v-btn>
       </v-toolbar>
       <v-card-text>
         <h2 class="animation" style="text-align: center">Игра на совпадение</h2>
         <h3 style="text-align: center">{{ selectedGame?.CoincidenceTheme }}</h3>
-        <!-- <h3>Игрок: {{ selectedGame?.GameCreator }}</h3> -->
-        <!-- Д{{ selectedGame.Duel }} -->
-        <div>MatchRate: {{ selectedGame?.MatchRate }}</div>
-
-        <!-- Scores:
-        <ul>
-          <li v-for="(item, index) in selectedGame?.Score" :key="index">
-            {{ Object.keys(item)[0] }}: {{ Object.values(item)[0] }}
-          </li>
-        </ul>
-        {{ selectedGame?.Score }} -->
-        <div>
-          <!-- {{ relatedEnemies[0].Enemy }} -->
-          <!-- {{ selectedGame.EnemyData.length }} -->
-        </div>
-        <div>
-          <!-- {{ relatedEnemies[0].Enemy }} -->
-          <!-- {{ selectedGame.Finish }} -->
-        </div>
+        <!-- <div>MatchRate: {{ selectedGame?.MatchRate }}</div> -->
+        <div></div>
+        <div></div>
       </v-card-text>
-      <v-row no-gutters>
+      <v-row no-gutters :style="{ display: xs ? 'contents' : 'flex' }">
         <v-col>
           <v-sheet class="pa-2 ma-2">
-            <v-card color="indigo" style="text-align: center"
-              ><p><strong>Мои значения</strong></p></v-card
+            <v-card color="indigo" style="text-align: center">
+              <v-avatar
+                v-if="!avatar?.url"
+                color="info"
+                size="50"
+                style="margin-top: 5px"
+              >
+                <v-icon icon="mdi-account-circle" style="scale: 4"></v-icon>
+              </v-avatar>
+              <v-avatar v-else size="50" style="margin-top: 5px">
+                <v-img alt="Avatar" :src="avatar?.url"></v-img>
+              </v-avatar>
+              <p><strong>Мои значения</strong></p></v-card
             >
             <v-radio-group
               v-model="selectedGame.MatchValue"
@@ -51,32 +46,35 @@
                 :key="index + MatchValue"
               ></v-radio>
               <hr />
-              <!-- Добавляем опцию для снятия выбора -->
-              <v-radio :label="'Нет совпадений'" :value="null"></v-radio>
+              <v-radio
+                v-if="!selectedGame.Duel"
+                :label="'Нет совпадений'"
+                :value="null"
+              ></v-radio>
             </v-radio-group>
-            <!-- <p>Selected Button: {{ selectedGame.MatchValue }}</p> -->
-
-            <!-- <v-checkbox
-              v-for="(MatchValue, index) in selectedGame.MatchValues"
-              v-model="selectedGame.MatchValue"
-              :label="MatchValue"
-              :value="MatchValue"
-              :key="index + MatchValue"
-            ></v-checkbox>
-            <p>Selected Button: {{ selectedGame.MatchValue }}</p> -->
           </v-sheet>
         </v-col>
         <v-col
           v-for="Enemy in selectedGame.EnemyData"
           :key="Enemy.Enemy.username"
         >
-          <!-- {{ enemiesData }} -->
           <v-sheet class="pa-2 ma-2">
-            <v-card color="indigo" style="text-align: center"
-              ><p>
+            <v-card color="indigo" style="text-align: center">
+              <v-avatar
+                v-if="Enemy.Enemy.avatar === undefined"
+                color="info"
+                size="50"
+                style="margin-top: 5px"
+              >
+                <v-icon icon="mdi-account-circle" style="scale: 4"></v-icon>
+              </v-avatar>
+              <v-avatar v-else size="50" style="margin-top: 5px">
+                <v-img alt="Avatar" :src="Enemy.Enemy.avatar.url"></v-img>
+              </v-avatar>
+              <p>
                 <strong>{{ Enemy.Enemy.username }}</strong>
-              </p></v-card
-            >
+              </p>
+            </v-card>
             <v-radio-group v-model="Enemy.MatchValue" @change="handleChange">
               <v-radio
                 v-for="(MatchValue, index) in Enemy.MatchValues"
@@ -86,16 +84,18 @@
               ></v-radio>
               <hr />
               <!-- Добавляем опцию для снятия выбора -->
-              <v-radio :label="'Нет совпадений'" :value="null"></v-radio>
+              <v-radio
+                v-if="!selectedGame.Duel"
+                :label="'Нет совпадений'"
+                :value="null"
+              ></v-radio>
             </v-radio-group>
           </v-sheet>
         </v-col>
-        <!-- {{ matches }} -->
-        <v-container v-if="matches.length > 0">
+        <v-container v-if="matches.length > 0" style="max-width: 100%">
           <v-row>
             <v-col>
               <v-card>
-                <!-- <v-card-title>Результаты:</v-card-title> -->
                 <v-card-text>
                   <v-row
                     class="hover"
@@ -109,15 +109,6 @@
                     </v-col>
                   </v-row>
                 </v-card-text>
-                <!-- <v-card-actions>
-                  <v-btn
-                    v-if="selectedMatchIndex !== null"
-                    color="error"
-                    @click="removeSelectedMatch"
-                  >
-                    Удалить выбранное совпадение
-                  </v-btn>
-                </v-card-actions> -->
               </v-card>
             </v-col>
           </v-row>
@@ -132,7 +123,6 @@
           </v-card-actions>
         </v-container>
       </v-row>
-      <!-- <div>{{ matches }}</div> -->
       <v-btn class="ma-2" color="primary" @click="fixMatch">
         Зафиксировать совпадение
       </v-btn>
@@ -144,18 +134,12 @@
           >Дальше</v-btn
         >
         <v-btn v-else color="primary" @click="matchScoreDuel(matches)"
-          >Дальше (дуэль)</v-btn
+          >Дальше</v-btn
         >
       </v-card-actions>
-      <!-- {{ selectedGame?.GameCreator.username }} -->
-      {{ matches }}
-      {{ matchScore }}
-      <!-- {{ nonEmptyCounts }} -->
     </v-card>
     <mismatching-game v-if="finishMatchGame"></mismatching-game>
-    <!-- Missmatch Game -->
   </v-dialog>
-  <!-- {{ finishMatchGame }} -->
 </template>
 
 <script setup lang="ts">
@@ -166,18 +150,9 @@ Parse.initialize(
 );
 Parse.serverURL = "https://parseapi.back4app.com/";
 import { ref } from "vue";
-
-// import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
 import { useDisplay } from "vuetify";
-
-const { mobile } = useDisplay();
-
-// const sessionStore = useSessionStore();
-// const { avatarProfile } = storeToRefs(sessionStore);
-// const { avatar } = storeToRefs(sessionStore);
-// const { setAvatar } = sessionStore;
 
 const gameStore = useGameStore();
 const {
@@ -199,7 +174,7 @@ const {
   openGame,
   closeGame,
   addMatch,
-  resetMatches,
+  // resetMatches,
   // selectMatch,
   removeSelectedMatch,
   setMatchScore,
@@ -208,34 +183,31 @@ const {
   fetchGames,
 } = gameStore;
 
+const { mobile } = useDisplay();
+const sm = useDisplay().sm;
+const xs = useDisplay().xs;
+
+const fixClick = ref(false);
+
 const handleChange = (value) => {
   if (value === null) {
     selectedGame.value.MatchValue = null;
   }
 };
 
-const fixClick = ref(false);
-// const finishMatchGame = ref(false);
-// const score = ref<any[]>([]);
-
 const fixMatch = () => {
   fixClick.value = true;
   const matchObject = {};
-  // const username = selectedGame.value.GameCreator.username
-
   // Добавляем собственное значение
   if (selectedGame.value.MatchValue !== null) {
-    // matchObject[selectedGame.value.GameCreator.username] =
     matchObject[selectedGame.value.GameCreator.objectId] =
       selectedGame.value.MatchValue;
   } else {
-    // matchObject[selectedGame.value.GameCreator.username] = null;
     matchObject[selectedGame.value.GameCreator.objectId] = null;
   }
 
   // Добавляем значения соперников
   selectedGame.value.EnemyData.forEach((enemy) => {
-    // matchObject[enemy.Enemy.username] = enemy.MatchValue;
     matchObject[enemy.Enemy.objectId] = enemy.MatchValue;
   });
 
@@ -255,23 +227,8 @@ const toggleSelectMatch = (index) => {
 
 // Функция для подсчета непустых значений
 async function countNonEmptyValues(matches) {
+  setLoadingValue(true);
   const counts = {};
-
-  // Проход по каждому объекту в массиве совпадений
-  // matches.forEach((match) => {
-  //   for (const user in match) {
-  //     if (match.hasOwnProperty(user)) {
-  //       // Увеличиваем счетчик, если значение не пустое
-  //       if (match[user] !== null) {
-  //         if (!counts[user]) {
-  //           counts[user] = 0;
-  //         }
-  //         counts[user]++;
-  //       }
-  //     }
-  //   }
-  // });
-
   // Проход по каждому объекту в массиве совпадений
   matches.forEach((match) => {
     for (const user in match) {
@@ -298,8 +255,6 @@ async function countNonEmptyValues(matches) {
   }));
   console.log("Match Score: ", result);
   setMatchScore(result);
-  // closeGame();
-  // finishMatchGame.value = true;
   setFinishMatchGame(true);
   addFinishMatchGame(selectedGame.value.objectId);
 
@@ -311,9 +266,6 @@ async function countNonEmptyValues(matches) {
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
 
-  //   Ищем объект по id
-  // const gameObject = await query.get(selectedGame.value.objectId);
-
   try {
     // Предположим, что у вас уже есть объект Game, который вы хотите обновить
     const gameObject = await query.get(selectedGame.value.objectId);
@@ -322,13 +274,15 @@ async function countNonEmptyValues(matches) {
     gameObject.set("MatchScore", transformedArray);
     // Сохраняем изменения
     await gameObject.save();
+    setLoadingValue(false);
   } catch (error) {
     console.error("Error while saving Score:", error);
   }
-  // return result;
 }
 
 async function matchScoreDuel(matches) {
+  setFinishMatchGame(true);
+  // setLoadingValue(true);
   const Game = Parse.Object.extend("Games");
   const query = new Parse.Query(Game);
 
@@ -340,15 +294,12 @@ async function matchScoreDuel(matches) {
     gameObject.set("MatchScoreDuel", matches.length);
     // Сохраняем изменения
     await gameObject.save();
-    setFinishMatchGame(true);
     addFinishMatchGame(selectedGame.value.objectId);
+    // setLoadingValue(false);
   } catch (error) {
     console.error("Error while saving Score:", error);
   }
 }
-
-// Вызов функции и получение результата
-// const nonEmptyCounts = countNonEmptyValues(matches);
 </script>
 
 <style scoped>

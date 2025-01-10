@@ -1,6 +1,5 @@
 <template>
-  <div class="main">
-    <!-- {{ userId }} -->
+  <div class="main" v-if="!loading">
     <v-row justify="center">
       <v-menu transition="slide-y-transition">
         <template v-slot:activator="{ props }">
@@ -8,7 +7,6 @@
             Создать игру
           </v-btn>
         </template>
-        <!-- <v-list :items="items"></v-list> -->
         <v-list>
           <v-list-item
             v-for="item in items"
@@ -19,19 +17,10 @@
           </v-list-item>
         </v-list>
       </v-menu>
-
-      <!-- <div v-if="clickItem == 1">1</div>
-      <div v-else-if="clickItem == 2">2</div> -->
-
       <div class="mx-4 hidden-sm-and-down"></div>
     </v-row>
-
     <v-row justify="center">
       <div class="text-center pa-4">
-        <!-- <v-btn @click="dialog = true" color="primary">
-          Присоединиться к игре
-        </v-btn> -->
-
         <v-btn @click="handleItemClick(3)" color="primary">
           Присоединиться к игре
         </v-btn>
@@ -39,10 +28,10 @@
         <v-dialog
           v-if="join"
           v-model="join"
-          width="auto"
+          :style="{ width: mobile.xs ? '100%' : '400px' }"
           @click:outside="(gameId = null), (error = 0)"
         >
-          <v-card width="400">
+          <v-card>
             <v-text-field
               v-model="gameId"
               hide-details="auto"
@@ -70,23 +59,40 @@
               text="Игры с таким ID не существует!"
               type="warning"
             ></v-alert>
+            <v-alert
+              v-if="error == 3"
+              color="red"
+              style="margin-block-end: 10px"
+              text="Достигнуто максимальное количество игроков!"
+              type="warning"
+            ></v-alert>
+            <v-alert
+              v-if="error == 4"
+              color="red"
+              style="margin-block-end: 10px"
+              text="Игра уже запущена!"
+              type="warning"
+            ></v-alert>
           </v-card>
         </v-dialog>
 
         <v-dialog
           v-if="clickedItem == 1"
           v-model="dialog"
-          width="auto"
+          :style="{ width: mobile.xs ? '100%' : '400px' }"
           @click:outside="theme = null"
         >
-          <v-card width="400">
+          <v-card>
+            <!-- {{ mobile }} -->
             <v-text-field
               v-model="theme"
               hide-details="auto"
               label="Введите тему (совпадение)"
             ></v-text-field>
+            <!-- {{ mobile }} -->
             <template v-slot:actions>
               <v-btn
+                :disabled="!theme"
                 class="ms-auto"
                 text="Ok"
                 @click="(dialog = false), saveDataInStorage()"
@@ -95,7 +101,6 @@
           </v-card>
         </v-dialog>
       </div>
-      {{ clickItem }}
       <div class="mx-4 hidden-sm-and-down"></div>
     </v-row>
   </div>
@@ -111,6 +116,7 @@ Parse.serverURL = "https://parseapi.back4app.com/";
 import { mapState } from "pinia";
 import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
+import { useDisplay } from "vuetify";
 
 export default {
   data: () => ({
@@ -128,65 +134,51 @@ export default {
     clickedItem: null,
     gameId: "",
     theme: "",
-    loading: false,
     error: 0,
     join: false,
+    mobile: useDisplay(),
   }),
   computed: {
     // Используем mapState для получения состояния из хранилища
-    ...mapState(
-      useSessionStore,
-      ["username", "email", "userId", "avatarProfile", "avatar"],
-      useGameStore,
-      [
-        "clickItem",
-        "gameTheme",
-        "loading",
-        "randomTopicMatch",
-        "gameTheme",
-        "gameMismatchTheme",
-        "randomTopicMismatch",
-      ]
-    ),
+    ...mapState(useSessionStore, [
+      "username",
+      "email",
+      "userId",
+      "avatarProfile",
+      "avatar",
+    ]),
+    ...mapState(useGameStore, [
+      "clickItem",
+      "gameTheme",
+      "loading",
+      "randomTopicMatch",
+      "gameTheme",
+      "gameMismatchTheme",
+      "randomTopicMismatch",
+    ]),
+    display() {
+      this.mobile = useDisplay();
+      return this.mobile;
+    },
   },
-  //   handleItemClick(value) {
-  //     this.clickedItem = value;
-  //     //   this.setClickItem(this.clickedItem);
-  //     if (this.clickedItem == 1) {
-  //       this.dialog = true;
-  //     }
-  //     console.log("Clicked item value:", this.clickItem);
-  //   },
-  // },
-  //   mounted() {
-  //     this.fetchData();
-  //   },
   methods: {
     handleItemClick(value) {
       this.clickedItem = value;
-      //   this.setClickItem(this.clickedItem);
       if (this.clickedItem == 1) {
         this.dialog = true;
       } else if (this.clickedItem == 2) {
-        // const gameStore = useGameStore();
         this.getRandomTopic();
         this.setClickItem(value);
-        // this.createRandomGame();
-        // console.log(gameStore.randomTopicMatch);
         this.dialog = true;
       } else {
         this.join = true;
       }
-      // console.log("Clicked item value:", this.clickItem);
     },
 
     setClickItem(clickedItem) {
       const gameStore = useGameStore();
-      gameStore.setClickItem(clickedItem); // или любое другое значение
+      gameStore.setClickItem(clickedItem);
       console.log("Click Item:", clickedItem);
-      // if (clickedItem == 2) {
-      //   this.getRandomTopic();
-      // }
     },
 
     setGameTheme(theme) {
@@ -199,86 +191,12 @@ export default {
       gameStore.setLoadingValue(loading);
     },
 
-    // async createGame() {
-    //   this.setLoadingValue(true);
-    //   // Получаем текущего пользователя
-    //   const currentUser = Parse.User.current();
-
-    //   if (!currentUser) {
-    //     console.error("No user is currently logged in");
-    //     return;
-    //   }
-
-    //   // Определяем новый класс (таблицу)
-    //   const Game = Parse.Object.extend("Games");
-
-    //   // Создаём новый объект этого класса
-    //   const newGame = new Game();
-
-    //   // Устанавливаем значения полей
-    //   newGame.set("CoincidenceTheme", this.theme);
-
-    //   // Устанавливаем связь с текущим пользователем
-    //   newGame.set("GameCreator", currentUser);
-    //   this.setClickItem(this.clickedItem);
-    //   this.setGameTheme(this.theme);
-
-    //   try {
-    //     // Сохраняем объект
-    //     const result = await newGame.save();
-    //     // this.setClickItem(this.clickedItem);
-    //     console.log("New game created successfully");
-
-    //     // Сохранение id игры в localStorage
-    //     localStorage.setItem("gameId", result.id);
-    //     console.log(
-    //       "Game ID saved to localStorage:",
-    //       result.get("GameCreator")
-    //     );
-    //     await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
-    //   } catch (error) {
-    //     console.error("Error while creating new game:", error);
-    //   } finally {
-    //     this.setLoadingValue(false); // Скрываем загрузчик
-    //   }
-    // },
-
     async saveDataInStorage() {
       this.setLoadingValue(true);
-      // Получаем текущего пользователя
-      // const currentUser = Parse.User.current();
-
-      // if (!currentUser) {
-      //   console.error("No user is currently logged in");
-      //   return;
-      // }
-
-      // Определяем новый класс (таблицу)
-      // const Game = Parse.Object.extend("Games");
-
-      // // Создаём новый объект этого класса
-      // const newGame = new Game();
-
-      // // Устанавливаем значения полей
-      // newGame.set("CoincidenceTheme", this.theme);
-
-      // Устанавливаем связь с текущим пользователем
-      // newGame.set("GameCreator", currentUser);
       this.setClickItem(this.clickedItem);
       this.setGameTheme(this.theme);
 
       try {
-        // Сохраняем объект
-        // const result = await newGame.save();
-        // this.setClickItem(this.clickedItem);
-        // console.log("New game created successfully");
-
-        // Сохранение id игры в localStorage
-        // localStorage.setItem("gameId", result.id);
-        // console.log(
-        // "Game ID saved to localStorage:",
-        // result.get("GameCreator")
-        // );
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
       } catch (error) {
         console.error("Error while creating new game:", error);
@@ -328,6 +246,7 @@ export default {
 
       // Устанавливаем значения полей
       newGame.set("CoincidenceTheme", gameStore.randomTopicMatch);
+      newGame.set("Players", 1);
 
       // Устанавливаем связь с текущим пользователем
       newGame.set("GameCreator", currentUser);
@@ -337,8 +256,10 @@ export default {
       try {
         // Сохраняем объект
         const result = await newGame.save();
-        // this.setClickItem(this.clickedItem);
         console.log("New game created successfully");
+        const gameStore = useGameStore();
+        gameStore.setRandomTopicMatch(null);
+        gameStore.setRandomTopicMismatch(null);
 
         // Сохранение id игры в localStorage
         localStorage.setItem("gameId", result.id);
@@ -354,42 +275,8 @@ export default {
       }
     },
 
-    async joinTheGameRezerv() {
-      const Game = Parse.Object.extend("Games");
-      const query1 = new Parse.Query(Game);
-      // Ищем объект по id
-      const gameObject = await query1.get(this.gameId);
-
-      const Enemy = Parse.Object.extend("EnemyData");
-      const query2 = new Parse.Query(Enemy);
-      const enemyObject = await query2.get("R6Hby7Qgmi");
-
-      if (gameObject) {
-        console.log("Game found: ", gameObject);
-        console.log("Enemy found: ", enemyObject);
-        const relation = gameObject.relation("EnemyData");
-        relation.add(enemyObject);
-        gameObject.save();
-
-        // Создаем новую колонку с типом массив и записываем туда данные
-        // gameObject.set("MatchValues", matchValues);
-
-        // Сохраняем изменения
-        // await gameObject.save();
-        // matchGame.value = false;
-        // dialog.value = true;
-
-        //   console.log("Game updated successfully with new array column.");
-        // console.log("Dialog: ", dialog);
-        // console.log("Match Game: ", matchGame);
-      }
-    },
-
     async joinTheGame() {
       const gameStore = useGameStore();
-      // const gamesIds = gameStore.gamesData.forEach((game) => {
-      //   console.log(game.objectId);
-      // });
       const myGamesIds = [];
       const notmineGamesIds = [];
       gameStore.gamesData.forEach((game) => {
@@ -398,8 +285,6 @@ export default {
       gameStore.strangersData.forEach((game) => {
         notmineGamesIds.push(game.objectId);
       });
-      // console.log(gamesIds);
-      // console.log(this.game)
       if (
         myGamesIds.includes(this.gameId) ||
         notmineGamesIds.includes(this.gameId)
@@ -413,70 +298,32 @@ export default {
           const query1 = new Parse.Query(Game);
           // Ищем объект по id
           const gameObject = await query1.get(this.gameId);
-          // if (gameObject) {
-          const coincidenceTheme = gameObject.get("CoincidenceTheme");
-          const mismatchTheme = gameObject.get("MismatchTheme");
-          const gameStore = useGameStore();
-          gameStore.setGameTheme(coincidenceTheme);
-          gameStore.setGameMismatchTheme(mismatchTheme);
-          gameStore.setClickItem("3");
-          gameStore.setGameId(this.gameId);
-          console.log("CoincidenceTheme: ", gameStore.gameTheme);
-          console.log("Mismatch Theme: ", gameStore.gameMismatchTheme);
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
-          // } else {
-          // this.error = 2;
-          // }
-          // Определяем новый класс (таблицу)
-          // const Enemy = Parse.Object.extend("EnemyData");
-          // Создаём новый объект этого класса
-          // const newEnemy = new Enemy();
-          // Получаем имя пользователя
+          const players = gameObject.get("Players");
+          const duelValue = gameObject.get("Duel");
+          if (players < 4) {
+            const coincidenceTheme = gameObject.get("CoincidenceTheme");
+            const mismatchTheme = gameObject.get("MismatchTheme");
+            const gameStore = useGameStore();
+            gameStore.setGameTheme(coincidenceTheme);
+            gameStore.setGameMismatchTheme(mismatchTheme);
+            gameStore.setClickItem("3");
+            gameStore.setGameId(this.gameId);
+            console.log("CoincidenceTheme: ", gameStore.gameTheme);
+            console.log("Mismatch Theme: ", gameStore.gameMismatchTheme);
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку }
+          } else if (duelValue == true) {
+            this.error = 4;
+          } else {
+            this.error = 3;
+          }
         } catch {
           this.error = 2;
           console.error("Игра не найдена!:", error);
         } finally {
+          console.log("this.error: ", this.error);
+          console.log("duelValue: ", this.duelValue);
           this.setLoadingValue(false); // Скрываем загрузчик
         }
-        ////////////////////////////////////
-
-        // const Game = Parse.Object.extend("Games");
-        // const query1 = new Parse.Query(Game);
-        // //   // Ищем объект по id
-        // const gameObject = await query1.get(this.gameId);
-        // if (gameObject) {
-        //   console.log(gameObject);
-        // } else {
-        //   console.log("Игра не найдена! ");
-        // }
-        // this.dialog = false;
-        // }
-
-        // this.setLoadingValue(true);
-        // try {
-        //   const Game = Parse.Object.extend("Games");
-        //   const query1 = new Parse.Query(Game);
-        //   // Ищем объект по id
-        //   const gameObject = await query1.get(this.gameId);
-
-        //   // Определяем новый класс (таблицу)
-        //   // const Enemy = Parse.Object.extend("EnemyData");
-        //   // Создаём новый объект этого класса
-        //   // const newEnemy = new Enemy();
-        //   // Получаем имя пользователя
-        //   const coincidenceTheme = gameObject.get("CoincidenceTheme");
-        //   const mismatchTheme = gameObject.get("MismatchTheme");
-        //   const gameStore = useGameStore();
-        //   gameStore.setGameTheme(coincidenceTheme);
-        //   gameStore.setGameMismatchTheme(mismatchTheme);
-        //   gameStore.setClickItem("3");
-        //   console.log("CoincidenceTheme: ", gameStore.gameTheme);
-        //   console.log("Mismatch Theme: ", gameStore.gameMismatchTheme);
-        //   await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
-        // } catch {
-        //   console.error("Error while creating new game:", error);
-        // } finally {
-        //   this.setLoadingValue(false); // Скрываем загрузчик
       }
     },
   },

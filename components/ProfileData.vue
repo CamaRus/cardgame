@@ -1,22 +1,13 @@
 <template>
-  <v-card color="#9c27b0" width="100%" class="overflow-auto">
+  <v-card color="#9c27b0" width="100%" class="overflow-auto" :style="{ paddingTop: calculatePaddingTop() }">
     <v-form v-model="form" @submit.prevent="onSubmit">
       <v-toolbar color="purple" flat>
-        <!-- <v-btn icon="mdi-account"></v-btn> -->
-
         <v-toolbar-title class="font-weight-light">
-          <!-- {{ fetchUsername }} -->
-          {{ username }}
-          <!-- {{ userId }} -->
-          <!-- {{ email }} -->
-          <!-- {{ avatarProfile }} -->
-          <!-- {{ avatar.name }} -->
-          <!-- {{ avatar }} -->
         </v-toolbar-title>
 
         <v-spacer></v-spacer>
 
-        <v-btn icon @click="isEditing = !isEditing">
+        <v-btn icon @click="(isEditing = !isEditing), resetData()">
           <v-fade-transition leave-absolute>
             <v-icon v-if="isEditing">mdi-close</v-icon>
 
@@ -24,8 +15,10 @@
           </v-fade-transition>
         </v-btn>
       </v-toolbar>
-      <!-- <div style="display: flex"> -->
-      <v-card :disabled="!isEditing" color="purple" style="display: flex"
+      <v-card
+        :disabled="!isEditing"
+        color="purple"
+        :style="{ display: mobile.xs ? 'grid' : 'flex' }"
         ><avatar-file :disabled="!isEditing"></avatar-file>
         <v-card-text>
           <v-text-field
@@ -48,47 +41,26 @@
             clearable
           ></v-text-field> </v-card-text
       ></v-card>
-      <!-- </div> -->
 
       <v-divider></v-divider>
 
-      <v-card-actions>
+      <v-card-actions style="padding: 1.5rem">
         <v-spacer></v-spacer>
 
         <v-btn
-          :disabled="!form || !isEditing"
-          @click="save"
+          :disabled="!form || !isEditing || showCropper"
+          @click="save()"
           :loading="loading"
           type="submit"
           variant="elevated"
         >
           Сохранить
         </v-btn>
-
-        <!-- <v-btn
-          :disabled="!emailRules.value || !isEditing"
-          @click="save"
-          :loading="loading"
-          type="submit"
-          variant="elevated"
-        >
-          Сохранить
-        </v-btn> -->
       </v-card-actions>
-
-      <v-snackbar
-        v-model="hasSaved"
-        :timeout="2000"
-        location="bottom left"
-        position="absolute"
-        attach
-      >
-        Your profile has been updated
+      <v-snackbar v-model="hasSaved" :timeout="3000" style="top: 85%">
+        Изменения сохранены!
       </v-snackbar>
-      <!-- </v-form> -->
     </v-form>
-    <!-- <img :src="avatar.url" alt="Avatar Preview" class="avatar-preview" /> -->
-    <!-- {{ avatarProfile.name }} -->
   </v-card>
 </template>
 
@@ -101,6 +73,8 @@ Parse.initialize(
 Parse.serverURL = "https://parseapi.back4app.com/";
 import { mapState } from "pinia";
 import { useSessionStore } from "../store/session";
+import { useDisplay } from "vuetify";
+import { useGameStore } from '~/store/game';
 
 export default {
   data: () => ({
@@ -110,6 +84,7 @@ export default {
     newUsername: "",
     newEmail: "",
     loading: false,
+    mobile: useDisplay(),
     states: [
       { name: "Florida", abbr: "FL", id: 1 },
       { name: "Georgia", abbr: "GA", id: 2 },
@@ -141,7 +116,6 @@ export default {
 
   mounted() {
     this.setUsername();
-    // this.getDataUser();
     console.log("Created!");
   },
   computed: {
@@ -152,17 +126,17 @@ export default {
       "userId",
       "avatarProfile",
       "avatar",
+      "clearAvatar",
+      "svg",
+      "imgDataUrl",
+      "showCropper",
     ]),
-    // ...mapActions(useSessionStore, ["isValid", "fetchUsername"]),
 
-    // userId() {
-    //   return this.userId;
-    // },
+    display() {
+      this.mobile = useDisplay();
+      return this.mobile;
+    },
   },
-  //   Mounted() {
-  //     this.setUsername();
-  //     console.log("Mounted!");
-  //   },
 
   methods: {
     setUsername() {
@@ -170,10 +144,25 @@ export default {
       this.newEmail = this.email;
     },
 
+    calculatePaddingTop () {
+      if (this.mobile.xs) {
+        return `50px`;
+      } else if (this.mobile.sm) {
+        return `50px`
+      } else if (this.mobile.md) {
+        return `50px`
+      } else if (this.mobile.lg) {
+        return `175px`
+      } else if (this.mobile.sm) {
+        return `50px`
+      } else {
+        return `50px`
+        }
+},
+
     isValid() {
       const sessionStore = useSessionStore();
       sessionStore.isValid(); // или любое другое значение
-      // console.log('Is valid:', sessionStore.valid);
     },
 
     customFilter(itemTitle, queryText, item) {
@@ -190,21 +179,10 @@ export default {
 
       this.loading = true;
 
-      setTimeout(() => (this.loading = false), 2000);
+      // setTimeout(() => (this.loading = false), 2000);
     },
 
-    // save() {
-    //   const currentUser = Parse.User.current();
-    //   if (currentUser) {
-    //     console.log("Yes!");
-    //     // do stuff with the user
-    //   } else {
-    //     console.log("No!");
-    //     // show the signup or login page
-    //   }
-    // },
-
-    async save() {
+    async saveRezerv() {
       const currentUser = Parse.User.current();
 
       if (currentUser) {
@@ -225,10 +203,10 @@ export default {
 
           // Обновляем текущего пользователя, добавляя ссылку на файл
           currentUser.set("avatar", parseFile);
+        } else {
+          // Удаляем аватарку, если нового файла нет
+          currentUser.unset("avatar");
         }
-
-        // Создаем Parse файл из загруженного файла
-        //  const parseFile = new Parse.File(this.file.name, this.file);
 
         try {
           // Сохраняем изменения
@@ -243,25 +221,132 @@ export default {
       }
     },
 
-    // getDataUser() {
-    //   const user = Parse.Object.extend("User");
-    //   const query = new Parse.Query(user);
-    //   query.get(this.userId).then(
-    //     (userdata) => {
-    //       // The object was retrieved successfully.
-    //       const username = userdata.get("username");
-    //       const avatar = userdata.get("avatar");
-    //       this.username = username;
-    //       console.log("User: ", username);
-    //       console.log("Avatar: ", avatar);
-    //     },
-    //     console.log(this.username),
-    //     (error) => {
-    //       // The object was not retrieved successfully.
-    //       // error is a Parse.Error with an error code and message.
-    //     }
-    //   );
-    // },
+    async save() {
+      const currentUser = Parse.User.current();
+
+      if (currentUser) {
+        // Устанавливаем новые значения
+        currentUser.set("username", this.newUsername);
+        currentUser.set("email", this.newEmail);
+        await this.saveAvatarToBack4App();
+
+        try {
+          // Сохраняем изменения
+          await currentUser.save();
+          console.log("User data updated successfully: ", this.avatar);
+          console.log("clear avatar: ", this.clearAvatar);
+          const sessionStore = useSessionStore();
+          // await currentUser.fetch(); // Загружаем обновленные данные с сервера
+          // sessionStore.fetchUserData(); // или любое другое значение
+          await useGameStore().fetchGames();
+          await useGameStore().getGamesByEnemy(sessionStore.userId);
+          await useGameStore().mergeGameData(useGameStore().gamesData, useGameStore().strangersData)
+          this.isValid();
+          this.hasSaved = true;
+          this.loading = false;
+        } catch (error) {
+          console.error("Error while updating user data:", error);
+        }
+      } else {
+        console.error("No user is currently logged in");
+      }
+    },
+
+    // Конвертация dataURL в файл
+    dataURLtoFile(dataURL, filename) {
+      const arr = dataURL.split(",");
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, { type: mime });
+    },
+
+    resetData() {
+      // this.imgDataUrl = null;
+
+      const sessionStore = useSessionStore();
+      sessionStore.imgDataUrl = null;
+      sessionStore.clearAvatar = false;
+      this.newUsername = this.username;
+      this.newEmail = this.email;
+      console.log("clear img", this.imgDataUrl);
+    },
+
+    async saveAvatarToBack4AppRezerv() {
+      const currentUser = Parse.User.current();
+      if (!this.imgDataUrl) {
+        currentUser.unset("avatar");
+        await currentUser.save();
+        console.log("unset!");
+        // console.error("No image data available for upload. ", this.imgDataUrl);
+
+        // return;
+      } else
+        try {
+          // Конвертация dataURL в файл
+          const file = this.dataURLtoFile(this.imgDataUrl, "avatar.png");
+
+          // Создание Parse.File
+          const parseFile = new Parse.File("avatar.png", file);
+
+          // Сохранение файла
+          await parseFile.save();
+
+          // Привязка файла к текущему пользователю
+          // const currentUser = Parse.User.current();
+          if (currentUser) {
+            currentUser.set("avatar", parseFile); // Поле avatar
+            await currentUser.save();
+            console.log("Avatar uploaded and saved!");
+          } else {
+            console.log("No user is logged in.");
+          }
+        } catch (error) {
+          console.error("Error uploading avatar:", error);
+        }
+    },
+
+    async saveAvatarToBack4App() {
+  const currentUser = Parse.User.current();
+
+  if (!this.imgDataUrl) {
+    // Если новый аватар не предоставлен, ничего не делаем
+    if (!currentUser.get("avatar")) {
+      currentUser.unset("avatar"); // Удаляем только если ранее не было аватара
+      await currentUser.save();
+      console.log("Avatar unset!");
+    } else {
+      console.log("Avatar remains unchanged.");
+    }
+    return;
+  }
+
+  try {
+    // Конвертация dataURL в файл
+    const file = this.dataURLtoFile(this.imgDataUrl, "avatar.png");
+
+    // Создание Parse.File
+    const parseFile = new Parse.File("avatar.png", file);
+
+    // Сохранение файла
+    await parseFile.save();
+
+    // Привязка файла к текущему пользователю
+    if (currentUser) {
+      currentUser.set("avatar", parseFile); // Поле avatar
+      await currentUser.save();
+      console.log("Avatar uploaded and saved!");
+    } else {
+      console.log("No user is logged in.");
+    }
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+  }
+}
   },
 };
 </script>
@@ -269,5 +354,10 @@ export default {
 <style scoped>
 .text-red {
   color: aliceblue !important;
+}
+
+.trans {
+  transform: translateY(200px) !important;
+  transition: transform 0.3s ease !important;
 }
 </style>

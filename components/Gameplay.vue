@@ -1,9 +1,15 @@
 <template>
   <div class="main">
     <v-row justify="center">
-      <!-- {{ matchGame }} -->
-      <v-card width="400" v-if="matchGame && !loading">
+      <v-card
+        v-if="matchGame && !loading"
+        style="margin-top: 65px"
+        :style="{ width: xs ? '90%' : '400px' }"
+      >
         <div class="animation">ИГРА НА СОВПАДЕНИЕ!</div>
+        <!-- {{ useDisplay().md }} -->
+        <!-- {{ useDisplay() }} -->
+        <!-- {{ mobile }} -->
         <!-- <v-alert :title="gameTheme" style="justify-content: center"></v-alert> -->
         <v-alert
           v-if="clickItem == '1' || clickItem == '3'"
@@ -21,7 +27,6 @@
             v-model="firstmatch"
             hide-details="auto"
             label="Введите первое значение"
-            :rules="rules"
             required
           ></v-text-field>
 
@@ -30,7 +35,6 @@
             v-model="secondmatch"
             hide-details="auto"
             label="Введите второе значение"
-            :rules="rules"
             required
           ></v-text-field>
 
@@ -39,7 +43,6 @@
             v-model="thirdmatch"
             hide-details="auto"
             label="Введите третье значение"
-            :rules="rules"
             required
           ></v-text-field>
 
@@ -48,7 +51,6 @@
             v-model="fourthmatch"
             hide-details="auto"
             label="Введите четвертое значение"
-            :rules="rules"
             required
           ></v-text-field>
 
@@ -57,7 +59,6 @@
             v-model="fifthmatch"
             hide-details="auto"
             label="Введите пятое значение"
-            :rules="rules"
             required
           ></v-text-field>
 
@@ -66,7 +67,6 @@
             v-model="sixthmatch"
             hide-details="auto"
             label="Введите шестое значение"
-            :rules="rules"
             required
           ></v-text-field>
         </v-form>
@@ -91,9 +91,10 @@
       <v-dialog
         v-if="dialog && !loading && clickItem == '1'"
         v-model="dialog"
-        width="auto"
+        persistent
+        :style="{ width: xs ? '100%' : '400px' }"
       >
-        <v-card width="400">
+        <v-card style="margin-top: 5%">
           <v-text-field
             v-model="mismatchTheme"
             hide-details="auto"
@@ -101,26 +102,22 @@
           ></v-text-field>
           <template v-slot:actions>
             <v-btn
+              :disabled="!mismatchTheme"
               class="ms-auto"
               text="Ok"
               @click="(dialog = false), createMismatchTheme()"
             ></v-btn>
-            <!-- <v-btn
-              class="ms-auto"
-              text="Ok"
-              @click="(dialog = false), setGameMismatchTheme(mismatchTheme)"
-            ></v-btn> -->
           </template>
         </v-card>
       </v-dialog>
 
       <v-expand-x-transition>
-        <v-card width="400" v-show="expand && !loading">
+        <v-card
+          v-show="expand && !loading"
+          style="margin-top: 65px"
+          :style="{ width: xs ? '90%' : '400px' }"
+        >
           <div class="animation">ИГРА НА НЕСОВПАДЕНИЕ!</div>
-          <!-- <v-alert
-            :title="mismatchTheme"
-            style="justify-content: center"
-          ></v-alert> -->
           <v-alert
             v-if="clickItem == '1'"
             style="justify-content: center"
@@ -142,7 +139,6 @@
               v-model="firstmismatch"
               hide-details="auto"
               label="Введите первое значение"
-              :rules="rules"
               required
             ></v-text-field>
 
@@ -151,7 +147,6 @@
               v-model="secondmismatch"
               hide-details="auto"
               label="Введите второе значение"
-              :rules="rules"
               required
             ></v-text-field>
 
@@ -160,7 +155,6 @@
               v-model="thirdmismatch"
               hide-details="auto"
               label="Введите третье значение"
-              :rules="rules"
               required
             ></v-text-field>
 
@@ -169,7 +163,6 @@
               v-model="fourthmismatch"
               hide-details="auto"
               label="Введите четвертое значение"
-              :rules="rules"
               required
             ></v-text-field>
 
@@ -178,7 +171,6 @@
               v-model="fifthmismatch"
               hide-details="auto"
               label="Введите пятое значение"
-              :rules="rules"
               required
             ></v-text-field>
 
@@ -187,7 +179,6 @@
               v-model="sixthmismatch"
               hide-details="auto"
               label="Введите шестое значение"
-              :rules="rules"
               required
             ></v-text-field>
           </v-form>
@@ -235,6 +226,17 @@ import { ref, computed } from "vue";
 
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
+import { useDisplay } from "vuetify";
+import { useWindowSize } from "@vueuse/core";
+
+const { mobile } = useDisplay();
+const sm = useDisplay().sm;
+const xs = useDisplay().xs;
+const { width: windowWidth, height: windowHeight } = useWindowSize();
+
+const bottomNavHeight = computed(() => {
+  return windowHeight.value - 55;
+});
 
 const gameStore = useGameStore();
 const {
@@ -248,6 +250,7 @@ const {
   matchValues,
   mismatchValues,
   gameId,
+  maxPlayers,
 } = storeToRefs(gameStore);
 const {
   setClickItem,
@@ -258,6 +261,9 @@ const {
   setMismatchValues,
   setGameMismatchTheme,
   createGame,
+  fetchGames,
+  setRandomTopicMatch,
+  setRandomTopicMismatch,
 } = gameStore;
 
 const firstmatch = ref<string | null>(null);
@@ -266,16 +272,17 @@ const thirdmatch = ref<string | null>(null);
 const fourthmatch = ref<string | null>(null);
 const fifthmatch = ref<string | null>(null);
 const sixthmatch = ref<string | null>(null);
-let matchGame = ref(true);
 
-const mismatchTheme = ref<string | null>(null);
 const firstmismatch = ref<string | null>(null);
 const secondmismatch = ref<string | null>(null);
 const thirdmismatch = ref<string | null>(null);
 const fourthmismatch = ref<string | null>(null);
 const fifthmismatch = ref<string | null>(null);
 const sixthmismatch = ref<string | null>(null);
+
 let dialog = ref(false);
+const mismatchTheme = ref<string | null>(null);
+let matchGame = ref(true);
 let mismatchGame = ref(false);
 const expand = ref(false);
 
@@ -306,75 +313,11 @@ function handleSubmit() {
     console.log("Пожалуйста, заполните все поля.");
   } else {
     console.log("Все поля заполнены.");
-    // Добавьте здесь вашу логику для отправки данных или выполнения других действий
-  }
-}
-
-async function createMatchValuesRezerv() {
-  setLoadingValue(true);
-  // Получаем текущего пользователя
-  const currentUser = Parse.User.current();
-
-  if (!currentUser) {
-    console.error("No user is currently logged in");
-    return;
-  }
-  const gameId = localStorage.getItem("gameId");
-
-  const Game = Parse.Object.extend("Games");
-  // Создаем новый объект для поиска по id
-  const query = new Parse.Query(Game);
-  const matchValues = [
-    firstmatch.value,
-    secondmatch.value,
-    thirdmatch.value,
-    fourthmatch.value,
-    fifthmatch.value,
-    sixthmatch.value,
-  ];
-
-  try {
-    // Ищем объект по id
-    const gameObject = await query.get(gameId);
-
-    if (gameObject) {
-      console.log("Game found:", gameObject);
-
-      // Создаем новую колонку с типом массив и записываем туда данные
-      gameObject.set("MatchValues", matchValues);
-
-      // Сохраняем изменения
-      await gameObject.save();
-      matchGame.value = false;
-      dialog.value = true;
-
-      //   console.log("Game updated successfully with new array column.");
-      console.log("Dialog: ", dialog);
-      console.log("Match Game: ", matchGame);
-    } else {
-      console.error("No game found with the given id.");
-    }
-  } catch (error) {
-    console.error("Error while updating game:", error);
-  } finally {
-    setLoadingValue(false);
   }
 }
 
 async function createMatchValues() {
   setLoadingValue(true);
-  // Получаем текущего пользователя
-  // const currentUser = Parse.User.current();
-
-  // if (!currentUser) {
-  //   console.error("No user is currently logged in");
-  //   return;
-  // }
-  // const gameId = localStorage.getItem("gameId");
-
-  // const Game = Parse.Object.extend("Games");
-  // // Создаем новый объект для поиска по id
-  // const query = new Parse.Query(Game);
   const matchValues = [
     firstmatch.value,
     secondmatch.value,
@@ -385,17 +328,6 @@ async function createMatchValues() {
   ];
 
   try {
-    // Ищем объект по id
-    // const gameObject = await query.get(gameId);
-
-    // if (gameObject) {
-    // console.log("Game found:", gameObject);
-
-    // Создаем новую колонку с типом массив и записываем туда данные
-    // gameObject.set("MatchValues", matchValues);
-
-    // Сохраняем изменения
-    // await gameObject.save();
     setMatchValues(matchValues);
     matchGame.value = false;
     dialog.value = true;
@@ -408,10 +340,10 @@ async function createMatchValues() {
       dialog.value = false;
       mismatchGame.value = true;
       expand.value = !expand.value;
+      window.scrollTo({
+        top: 0,
+      });
     }
-    // } else {
-    // console.error("No game found with the given id.");
-    // }
   } catch (error) {
     console.error("Error while updating game:", error);
   } finally {
@@ -421,89 +353,11 @@ async function createMatchValues() {
 
 async function createMismatchTheme() {
   setLoadingValue(true);
-  // Получаем текущего пользователя
-  // const currentUser = Parse.User.current();
-
-  // if (!currentUser) {
-  //   console.error("No user is currently logged in");
-  //   return;
-  // }
-  // const gameId = localStorage.getItem("gameId");
-
-  // const Game = Parse.Object.extend("Games");
-  // // Создаем новый объект для поиска по id
-  // const query = new Parse.Query(Game);
-
   try {
-    // Ищем объект по id
-    // const gameObject = await query.get(gameId);
-
-    // if (gameObject) {
-    // console.log("Game found:", gameObject);
-
-    // gameObject.set("MismatchTheme", mismatchTheme.value);
-
-    // Сохраняем изменения
-    // await gameObject.save();
     setGameMismatchTheme(mismatchTheme.value);
     dialog.value = false;
     mismatchGame.value = true;
     expand.value = !expand.value;
-    // } else {
-    // console.error("No game found with the given id.");
-    // }
-  } catch (error) {
-    console.error("Error while updating game:", error);
-  } finally {
-    setLoadingValue(false);
-  }
-}
-
-async function createMismatchValuesRezerv() {
-  setLoadingValue(true);
-  // Получаем текущего пользователя
-  const currentUser = Parse.User.current();
-
-  if (!currentUser) {
-    console.error("No user is currently logged in");
-    return;
-  }
-  const gameId = localStorage.getItem("gameId");
-
-  const Game = Parse.Object.extend("Games");
-  // Создаем новый объект для поиска по id
-  const query = new Parse.Query(Game);
-  const mismatchValues = [
-    firstmismatch.value,
-    secondmismatch.value,
-    thirdmismatch.value,
-    fourthmismatch.value,
-    fifthmismatch.value,
-    sixthmismatch.value,
-  ];
-
-  try {
-    // Ищем объект по id
-    const gameObject = await query.get(gameId);
-
-    if (gameObject) {
-      console.log("Game found:", gameObject);
-
-      // Создаем новую колонку с типом массив и записываем туда данные
-      gameObject.set("MissmatchValues", mismatchValues);
-
-      // Сохраняем изменения
-      await gameObject.save();
-      setStartValue(false);
-      // matchGame.value = false;
-      // dialog.value = true;
-
-      //   console.log("Game updated successfully with new array column.");
-      // console.log("Dialog: ", dialog);
-      // console.log("Match Game: ", matchGame);
-    } else {
-      console.error("No game found with the given id.");
-    }
   } catch (error) {
     console.error("Error while updating game:", error);
   } finally {
@@ -513,18 +367,6 @@ async function createMismatchValuesRezerv() {
 
 async function createMismatchValues() {
   setLoadingValue(true);
-  // Получаем текущего пользователя
-  // const currentUser = Parse.User.current();
-
-  // if (!currentUser) {
-  //   console.error("No user is currently logged in");
-  //   return;
-  // }
-  // const gameId = localStorage.getItem("gameId");
-
-  // const Game = Parse.Object.extend("Games");
-  // Создаем новый объект для поиска по id
-  // const query = new Parse.Query(Game);
   const mismatchValues = [
     firstmismatch.value,
     secondmismatch.value,
@@ -535,25 +377,9 @@ async function createMismatchValues() {
   ];
 
   try {
-    // Ищем объект по id
-    // const gameObject = await query.get(gameId);
-
-    // console.log("Game found:", gameObject);
-
-    // Создаем новую колонку с типом массив и записываем туда данные
-    // gameObject.set("MissmatchValues", mismatchValues);
-
-    // Сохраняем изменения
-    // await gameObject.save();
     setMismatchValues(mismatchValues);
     setStartValue(false);
     await createGame();
-    // matchGame.value = false;
-    // dialog.value = true;
-
-    //   console.log("Game updated successfully with new array column.");
-    // console.log("Dialog: ", dialog);
-    // console.log("Match Game: ", matchGame);
   } catch (error) {
     console.error("Error while updating game:", error);
   } finally {
@@ -562,6 +388,7 @@ async function createMismatchValues() {
 }
 
 async function createEnemyData() {
+  setLoadingValue(true);
   const mismatchValues = [
     firstmismatch.value,
     secondmismatch.value,
@@ -577,9 +404,9 @@ async function createEnemyData() {
 
   // Ищем объект по id
   const gameObject = await query1.get(gameId.value);
-
-  // Устанавливаем значение столбца Score
+  const currentPlayers = gameObject.get("Players");
   gameObject.set("Opponent", true);
+  gameObject.set("Players", currentPlayers + 1);
 
   const Enemy = Parse.Object.extend("EnemyData");
   // Создаём новый объект этого класса
@@ -590,18 +417,11 @@ async function createEnemyData() {
   newEnemy.set("MissmatchValues", mismatchValues);
   newEnemy.set("Enemy", currentUser);
   try {
-    // Сохраняем объект
+    if (currentPlayers > 3) {
+      throw new Error("Достигнуто максимальное количество игроков!");
+    }
     const result = await newEnemy.save();
-    // this.setClickItem(this.clickedItem);
     console.log("New Enemy Data created successfully");
-
-    // Сохранение id игры в localStorage
-    // localStorage.setItem("gameId", result.id);
-    // console.log("Game ID saved to localStorage:", result.get("GameCreator"));
-    // await new Promise((resolve) => setTimeout(resolve, 2000)); // Имитируем задержку
-    // const enemyId = await result.get("objectId");
-    // console.log(enemyId);
-    // Получаем objectId из результата
     const objectId = result.id;
     console.log("New Enemy Data created successfully with objectId:", objectId);
     const query2 = new Parse.Query(Enemy);
@@ -609,36 +429,19 @@ async function createEnemyData() {
     const relation = gameObject.relation("EnemyData");
     relation.add(enemyObject);
     gameObject.save();
-    // console.log(result.get("objectId"))
+    setStartValue(false);
+    await fetchGames();
   } catch (error) {
-    console.error("Error while creating new game:", error);
+    maxPlayers.value = true;
+    throw new Error(error.message);
   } finally {
-    // setLoadingValue(false); // Скрываем загрузчик
+    setStartValue(false);
+    setGameTheme(null);
+    setGameMismatchTheme(null);
+    setRandomTopicMatch(null);
+    setRandomTopicMismatch(null);
+    setLoadingValue(false);
   }
-
-  // const query2 = new Parse.Query(Enemy);
-  // const enemyObject = await query2.get("R6Hby7Qgmi");
-  // console.log(newEnemy.objectId);
-
-  // if (gameObject) {
-  // console.log("Game found: ", gameObject);
-  // console.log("Enemy found: ", enemyObject);
-  // const relation = gameObject.relation("EnemyData");
-  // relation.add(enemyObject);
-  // gameObject.save();
-
-  // Создаем новую колонку с типом массив и записываем туда данные
-  // gameObject.set("MatchValues", matchValues);
-
-  // Сохраняем изменения
-  // await gameObject.save();
-  // matchGame.value = false;
-  // dialog.value = true;
-
-  //   console.log("Game updated successfully with new array column.");
-  // console.log("Dialog: ", dialog);
-  // console.log("Match Game: ", matchGame);
-  // }
 }
 </script>
 

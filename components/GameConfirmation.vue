@@ -1,9 +1,35 @@
 <template>
-  <v-dialog v-model="confirmation" :width="mobile ? '100%' : 'auto'">
+  <v-dialog
+    v-model="confirmation"
+    :width="xs ? '100%' : '500px'"
+    :fullscreen="xs"
+  >
     <v-card style="text-align: center; padding: 15px">
-      <v-card-title>Игра ID: {{ selectedGame?.objectId }}</v-card-title>
+      <v-btn
+        icon="mdi-close"
+        @click="confirmation = false"
+        style="left: 90%; margin-block-end: 1%; scale: 50%"
+      ></v-btn>
+      <div
+        class="d-flex"
+        style="
+          border-style: groove;
+          border-radius: 10px;
+          justify-content: center;
+        "
+      >
+        <v-card-title>ID игры: {{ selectedGame?.objectId }}</v-card-title>
+        <span style="cursor: pointer" @click="copyGameId(selectedGame)"
+          ><font-awesome-icon size="xl" icon="copy" fade />
+          <v-tooltip activator="parent" location="bottom">{{
+            tooltipText
+          }}</v-tooltip></span
+        >
+      </div>
+      <!-- {{ userId }} -->
+      <!-- {{ selectedGame.GameCreator }} -->
+      <!-- <hr /> -->
       <v-card-subtitle>Ваши соперники:</v-card-subtitle>
-      <!-- <template v-slot:actions> -->
       <div>
         <div>
           <v-chip-group
@@ -14,7 +40,6 @@
             <v-chip>{{ Enemy.Enemy.username }}</v-chip>
           </v-chip-group>
         </div>
-        <!-- <div style="justify-content: center"> -->
         <v-alert
           style="margin-block-end: 10px"
           v-if="selectedGame.EnemyData.length > 1"
@@ -36,10 +61,7 @@
         <v-btn color="primary" v-else @click="duelMenu(true, selectedGame)"
           >Начать игру 1 на 1</v-btn
         >
-        {{ duel }}
-        <!-- </div> -->
       </div>
-      <!-- </template> -->
     </v-card>
   </v-dialog>
 </template>
@@ -55,16 +77,27 @@ Parse.initialize(
 );
 Parse.serverURL = "https://parseapi.back4app.com/";
 
+import { useSessionStore } from "../store/session";
 import { useGameStore } from "../store/game";
 import { storeToRefs } from "pinia";
 import { useDisplay } from "vuetify";
 
-const { mobile } = useDisplay();
-
+const sessionStore = useSessionStore();
 const gameStore = useGameStore();
-const { confirmation, selectedGame, duel } = storeToRefs(gameStore);
-const { confirmationWindow, confirmationWindowClose, openGame, duelMenu } =
-  gameStore;
+const { userId } = storeToRefs(sessionStore);
+const { confirmation, selectedGame, duel, tooltipText } =
+  storeToRefs(gameStore);
+const {
+  confirmationWindow,
+  confirmationWindowClose,
+  openGame,
+  duelMenu,
+  copyGameId,
+} = gameStore;
+const { mobile } = useDisplay();
+const sm = useDisplay().sm;
+const xs = useDisplay().xs;
+const width = useDisplay().width;
 </script>
 
 <style scoped></style>

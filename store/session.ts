@@ -9,18 +9,15 @@ Parse.serverURL = "https://parseapi.back4app.com/";
 export const useSessionStore = defineStore("sessionStore", () => {
   const valid = ref(false);
   const userdata = ref(false);
-  // const userdata = ref<string | null>(null);
   const username = ref<string | null>(null);
   const email = ref<string | null>(null);
   const userId = ref<string | null>(null);
   const avatar = ref<Parse.File | null>(null);
-  // const avatarProfile = ref<string | null>(null);
   const avatarProfile = ref<Parse.File | null>(null);
-
-  // function isValid(value: boolean) {
-  //   valid.value = value;
-  //   // console.log(valid);
-  // }
+  const svg = ref(false);
+  const clearAvatar = ref(false);
+  const imgDataUrl = ref<string | null>(null);
+  const showCropper = ref(false);
 
   function getUsernameFromLocalStorage() {
     const currentUserString = localStorage.getItem(
@@ -92,24 +89,6 @@ export const useSessionStore = defineStore("sessionStore", () => {
     console.log("Set Avatar!");
   }
 
-  // function getDataUser() {
-  //   const user = Parse.Object.extend("User");
-  //   const query = new Parse.Query(user);
-  //   query.get(this.userId).then(
-  //     (userdata) => {
-  //       // The object was retrieved successfully.
-  //       const username = userdata.get("username");
-  //       const avatar = userdata.get("avatar");
-  //       console.log("User: ", username);
-  //       console.log("Avatar: ", avatar);
-  //     },
-  //     (error) => {
-  //       // The object was not retrieved successfully.
-  //       // error is a Parse.Error with an error code and message.
-  //     }
-  //   );
-  // }
-
   async function fetchUsername() {
     if (userId.value) {
       try {
@@ -129,56 +108,46 @@ export const useSessionStore = defineStore("sessionStore", () => {
     }
   }
 
-  // function fetchUsername() {
-  //   console.log("fetchUsername");
-  // }
+  async function fetchUserData() {
+    if (userId.value) {
+      try {
+        // Создаем новый объект Parse.Query для класса "_User"
+        const query = new Parse.Query(Parse.User);
+
+        // Ищем пользователя по objectId
+        const user = await query.get(userId.value);
+
+        // Получаем имя пользователя
+        username.value = user.get("username");
+        email.value = user.get("email");
+        avatar.value = user.get("avatar");
+      } catch (error) {
+        console.error("Error while fetching user:", error);
+      }
+    } else {
+      console.error("User ID is required");
+    }
+  }
 
   function isValid() {
     if (process.client) {
       let token = localStorage.getItem(
         "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/installationId"
       );
-      // username.value = localStorage.getItem(
-      //   "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/currentUser"
-      // );
+      let sessionToken = localStorage.getItem("sessionToken");
       username.value = getUsernameFromLocalStorage();
-      // username.value = fetchUsername();
       email.value = getEmailFromLocalStorage();
       userId.value = getUserIdFromLocalStorage();
       avatar.value = getAvatarFromLocalStorage();
 
-      if (token) {
+      if (sessionToken) {
         valid.value = true;
       }
-      // valid.value =
-      //   localStorage.getItem(
-      //     "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/installationId"
-      //   ) || false;
-      // console.log("valid: ", valid);
       console.log("token: ", token);
+      console.log("sessionToken: ", sessionToken);
     }
-    //   // valid.value = value;
   }
 
-  // function userf() {
-  //   const currentUser = Parse.User.current();
-  //   if (currentUser) {
-  //     // do stuff with the user
-  //     userdata.value = true;
-  //   } else {
-  //     // show the signup or login page
-  //     userdata.value = false;
-  //   }
-  // }
-
-  // if (process.client) {
-  //   const valid =
-  //     localStorage.getItem(
-  //       "Parse/4RlgR1kapPiYAeXxd3NZYhrFnzPmUhDs3eiNvUyW/installationId"
-  //     ) || "no";
-  // }
-
-  // return { isValid, valid };
   return {
     valid,
     isValid,
@@ -190,5 +159,10 @@ export const useSessionStore = defineStore("sessionStore", () => {
     setAvatar,
     avatarProfile,
     fetchUsername,
+    svg,
+    clearAvatar,
+    imgDataUrl,
+    showCropper,
+    fetchUserData,
   };
 });
